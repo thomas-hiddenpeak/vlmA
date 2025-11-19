@@ -1,0 +1,982 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>视觉分析监控系统</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+      animation: fadeInDown 0.6s ease-out;
+    }
+    
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .header p {
+      font-size: 1rem;
+      opacity: 0.9;
+    }
+    
+    .main-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      animation: fadeIn 0.8s ease-out;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+    }
+    
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .card-title::before {
+      content: '';
+      width: 4px;
+      height: 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 2px;
+    }
+    
+    #video {
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+      background: #000;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      resize: both;
+      overflow: auto;
+      min-height: 360px;
+    }
+    
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 16px;
+      align-items: center;
+    }
+    
+    button {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    #startBtn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    #startBtn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    #startBtn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    #stopBtn {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+    }
+    
+    #stopBtn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+    }
+    
+    #stopBtn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #f8f9fa;
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+    
+    .control-group label {
+      font-size: 0.9rem;
+      color: #666;
+      font-weight: 500;
+    }
+    
+    input[type="number"],
+    select,
+    input[type="text"] {
+      padding: 8px 12px;
+      border: 2px solid #e1e4e8;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      transition: border-color 0.3s ease;
+    }
+    
+    input[type="number"]:focus,
+    select:focus,
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    #customPrompt {
+      flex: 1;
+      min-width: 200px;
+    }
+    
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: #666;
+    }
+    
+    .status-indicator::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #6c757d;
+      animation: pulse 2s infinite;
+    }
+    
+    .status-indicator.active::before {
+      background: #28a745;
+    }
+    
+    .status-indicator.error::before {
+      background: #dc3545;
+    }
+    
+    .history-container {
+      max-height: 600px;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+    
+    .history-container::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .history-container::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+    
+    .history-container::-webkit-scrollbar-thumb {
+      background: #667eea;
+      border-radius: 4px;
+    }
+    
+    .history-container::-webkit-scrollbar-thumb:hover {
+      background: #5568d3;
+    }
+    
+    .history-item {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-left: 4px solid #667eea;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      animation: slideInRight 0.4s ease-out;
+      transition: transform 0.2s ease;
+    }
+    
+    .history-item:hover {
+      transform: translateX(-4px);
+    }
+    
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .history-number {
+      display: inline-block;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    
+    .history-time {
+      color: #6c757d;
+      font-size: 0.85rem;
+    }
+    
+    .history-content {
+      color: #333;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-size: 0.95rem;
+    }
+    
+    /* Markdown 渲染样式 */
+    .history-content h1,
+    .history-content h2,
+    .history-content h3,
+    .history-content h4 {
+      margin-top: 2px;
+      margin-bottom: 1px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .history-content h1 { font-size: 1.3rem; }
+    .history-content h2 { font-size: 1.15rem; }
+    .history-content h3 { font-size: 1.05rem; }
+    .history-content h4 { font-size: 0.95rem; }
+    
+    .history-content p {
+      margin-bottom: 1px;
+    }
+    
+    .history-content ul,
+    .history-content ol {
+      margin-left: 20px;
+      margin-bottom: 1px;
+    }
+    
+    .history-content li {
+      margin-bottom: 1px;
+    }
+    
+    .history-content code {
+      background: #f6f8fa;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Courier New', monospace;
+      font-size: 0.9em;
+      color: #e83e8c;
+    }
+    
+    .history-content pre {
+      background: #f6f8fa;
+      padding: 2px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin-bottom: 1px;
+      border: 1px solid #e1e4e8;
+    }
+    
+    .history-content pre code {
+      background: none;
+      padding: 0;
+      color: #333;
+      font-size: 0.85rem;
+    }
+    
+    .history-content blockquote {
+      border-left: 4px solid #667eea;
+      padding-left: 3px;
+      margin: 1px 0;
+      color: #666;
+      font-style: italic;
+    }
+    
+    .history-content strong {
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .history-content em {
+      font-style: italic;
+      color: #666;
+    }
+    
+    .history-content a {
+      color: #667eea;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+    
+    .history-content a:hover {
+      color: #764ba2;
+      text-decoration: underline;
+    }
+    
+    .history-content hr {
+      border: none;
+      border-top: 2px solid #e1e4e8;
+      margin: 2px 0;
+    }
+    
+    .history-content table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 2px;
+    }
+    
+    .history-content table th,
+    .history-content table td {
+      border: 1px solid #e1e4e8;
+      padding: 2px;
+      text-align: left;
+    }
+    
+    .history-content table th {
+      background: #f6f8fa;
+      font-weight: 600;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+    
+    @media (max-width: 1024px) {
+      .main-content {
+        grid-template-columns: 1fr;
+      }
+      
+      .header h1 {
+        font-size: 2rem;
+      }
+    }
+    
+    /* 图片模态框样式 */
+    .image-modal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.9);
+      animation: fadeIn 0.3s ease-out;
+    }
+    
+    .image-modal.active {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .modal-content {
+      position: relative;
+      max-width: 90%;
+      max-height: 90%;
+      animation: zoomIn 0.3s ease-out;
+    }
+    
+    .modal-content img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+    
+    .modal-close {
+      position: absolute;
+      top: -40px;
+      right: 0;
+      color: white;
+      font-size: 36px;
+      font-weight: bold;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.1);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+    
+    .modal-close:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: rotate(90deg);
+    }
+    
+    .modal-info {
+      position: absolute;
+      bottom: -50px;
+      left: 0;
+      color: white;
+      font-size: 14px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 8px 16px;
+      border-radius: 6px;
+    }
+    
+    @keyframes zoomIn {
+      from {
+        transform: scale(0.8);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+    
+    /* 选项卡样式 */
+    .insight-tab:hover {
+      background: rgba(102, 126, 234, 0.05);
+      color: #667eea !important;
+    }
+    
+    .insight-tab-content {
+      animation: fadeIn 0.4s ease-out;
+    }
+    
+    /* 配置模态框样式 */
+    .config-modal {
+      display: none;
+      position: fixed;
+      z-index: 10000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      animation: fadeIn 0.3s ease-out;
+    }
+    
+    .config-modal.active {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .config-content {
+      background: white;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 900px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: slideInDown 0.3s ease-out;
+    }
+    
+    .config-header {
+      padding: 24px;
+      border-bottom: 2px solid #e1e4e8;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 16px 16px 0 0;
+    }
+    
+    .config-header h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+    
+    .config-close {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      font-size: 24px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+    
+    .config-close:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: rotate(90deg);
+    }
+    
+    .config-body {
+      padding: 24px;
+    }
+    
+    .config-section {
+      margin-bottom: 24px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 12px;
+      border-left: 4px solid #667eea;
+    }
+    
+    .config-section:last-child {
+      margin-bottom: 0;
+    }
+    
+    .config-section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .config-row {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+      align-items: center;
+    }
+    
+    .config-row:last-child {
+      margin-bottom: 0;
+    }
+    
+    .config-label {
+      font-weight: 600;
+      color: #555;
+      font-size: 0.9rem;
+    }
+    
+    .config-input {
+      padding: 8px 12px;
+      border: 2px solid #e1e4e8;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      transition: all 0.3s;
+    }
+    
+    .config-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .config-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s;
+      z-index: 100;
+    }
+    
+    .config-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    /* 配置选项卡样式 */
+    .config-tabs {
+      display: flex;
+      border-bottom: 2px solid #e1e4e8;
+      background: #f8f9fa;
+      padding: 0 24px;
+    }
+    
+    .config-tab {
+      padding: 14px 24px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-weight: 600;
+      color: #666;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .config-tab:hover {
+      background: rgba(102, 126, 234, 0.05);
+      color: #667eea;
+    }
+    
+    .config-tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+      background: white;
+    }
+    
+    .config-tab-content {
+      display: none;
+      padding: 24px;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+    
+    .config-tab-content.active {
+      display: block;
+      animation: fadeIn 0.3s ease-out;
+    }
+    
+    @keyframes slideInDown {
+      from {
+        transform: translateY(-50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <button class="config-btn" onclick="openConfig()">⚙️ 系统配置</button>
+    
+    <div class="header">
+      <h1>🎥 视觉分析监控系统</h1>
+      <p>基于 AI 的实时视频流分析平台</p>
+    </div>
+    
+    <div class="main-content">
+      <!-- 左侧：视频预览 -->
+      <div class="card">
+        <div class="card-title">视频预览</div>
+        <video id="video" autoplay playsinline></video>
+        
+        <div class="controls">
+          <div class="control-group" style="flex: 1;">
+            <label>UVC设备:</label>
+            <select id="deviceSelect" class="config-input" style="min-width: 150px; flex: 1;">
+              <option value="default">加载中...</option>
+            </select>
+            <button id="refreshDevicesBtn" style="padding: 8px 12px; background: #f8f9fa; color: #666; border: 2px solid #e1e4e8;" title="刷新设备列表">🔄</button>
+          </div>
+          <button id="startStreamBtn" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">📹 启动视频流</button>
+          <button id="stopStreamBtn" disabled style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">⏸️ 停止视频流</button>
+        </div>
+        
+        <div class="controls" style="margin-top: 12px;">
+          <button id="startBtn" disabled>▶️ 开始分析</button>
+          <button id="stopBtn" disabled>⏹️ 停止分析</button>
+        </div>
+        
+        <div class="status-indicator" id="statusContainer" style="margin-top: 16px;">
+          <span id="status">未启动视频流</span>
+        </div>
+      </div>
+      
+      <!-- 右侧：分析历史和洞察分析 -->
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        <div class="card">
+          <div class="card-title">分析历史</div>
+          <div class="history-container" id="history"></div>
+        </div>
+        
+        <div class="card">
+          <div class="card-title">💡 多层级洞察分析</div>
+          
+          <!-- 选项卡导航 -->
+          <div style="display: flex; border-bottom: 2px solid #e1e4e8; margin-bottom: 16px;">
+            <button class="insight-tab active" onclick="switchInsightTab('minute')" style="flex: 1; padding: 12px; border: none; background: none; cursor: pointer; font-weight: 600; color: #667eea; border-bottom: 3px solid #667eea; transition: all 0.3s;">
+              ⏱️ 60秒洞察 <span id="minuteCount" style="font-size: 0.85rem; color: #999; margin-left: 8px;">(0)</span>
+            </button>
+            <button class="insight-tab" onclick="switchInsightTab('fifteen')" style="flex: 1; padding: 12px; border: none; background: none; cursor: pointer; font-weight: 600; color: #999; border-bottom: 3px solid transparent; transition: all 0.3s;">
+              ⏰ 15分钟洞察 <span id="fifteenCount" style="font-size: 0.85rem; color: #999; margin-left: 8px;">(0)</span>
+            </button>
+            <button class="insight-tab" onclick="switchInsightTab('hour')" style="flex: 1; padding: 12px; border: none; background: none; cursor: pointer; font-weight: 600; color: #999; border-bottom: 3px solid transparent; transition: all 0.3s;">
+              🕐 1小时洞察 <span id="hourCount" style="font-size: 0.85rem; color: #999; margin-left: 8px;">(0)</span>
+            </button>
+            <button class="insight-tab" onclick="switchInsightTab('day')" style="flex: 1; padding: 12px; border: none; background: none; cursor: pointer; font-weight: 600; color: #999; border-bottom: 3px solid transparent; transition: all 0.3s;">
+              📅 每日洞察 <span id="dayCount" style="font-size: 0.85rem; color: #999; margin-left: 8px;">(0)</span>
+            </button>
+          </div>
+          
+          <!-- 选项卡内容 -->
+          <div class="insight-tab-content active" id="minuteTab" style="min-height: 400px; max-height: 500px; overflow-y: auto; padding: 8px;">
+            <div id="minuteInsightHistory"></div>
+          </div>
+          <div class="insight-tab-content" id="fifteenTab" style="display: none; min-height: 400px; max-height: 500px; overflow-y: auto; padding: 8px;">
+            <div id="fifteenInsightHistory"></div>
+          </div>
+          <div class="insight-tab-content" id="hourTab" style="display: none; min-height: 400px; max-height: 500px; overflow-y: auto; padding: 8px;">
+            <div id="hourInsightHistory"></div>
+          </div>
+          <div class="insight-tab-content" id="dayTab" style="display: none; min-height: 400px; max-height: 500px; overflow-y: auto; padding: 8px;">
+            <div id="dayInsightHistory"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 图片查看模态框 -->
+  <div id="imageModal" class="image-modal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="closeImageModal()">&times;</span>
+      <img id="modalImage" src="" alt="原图">
+      <div id="modalInfo" class="modal-info"></div>
+    </div>
+  </div>
+
+  <!-- 配置模态框 -->
+  <div id="configModal" class="config-modal">
+    <div class="config-content">
+      <div class="config-header">
+        <h2>⚙️ 系统配置</h2>
+        <button class="config-close" onclick="closeConfig()">&times;</button>
+      </div>
+      
+      <!-- 选项卡导航 -->
+      <div class="config-tabs">
+        <button class="config-tab active" onclick="switchConfigTab('analysis')">
+          📹 视频分析
+        </button>
+        <button class="config-tab" onclick="switchConfigTab('prompt')">
+          💬 分析提示词
+        </button>
+        <button class="config-tab" onclick="switchConfigTab('insight')">
+          🔍 洞察配置
+        </button>
+        <button class="config-tab" onclick="switchConfigTab('interval')">
+          ⏱️ 触发区间
+        </button>
+        <button class="config-tab" onclick="switchConfigTab('insightPrompt')">
+          📝 洞察提示词
+        </button>
+      </div>
+      
+      <!-- 选项卡内容 -->
+      <div class="config-body">
+        <!-- 视频分析配置 -->
+        <div id="analysisTab" class="config-tab-content active">
+          <div class="config-section">
+            <div class="config-section-title">📹 视频分析配置</div>
+            
+            <div class="config-row">
+              <div class="config-label">API 地址</div>
+              <input id="apiUrlInput" type="text" value="http://192.168.0.113:8000/v1/chat/completions" class="config-input" />
+            </div>
+            
+            <div class="config-row">
+              <div class="config-label">模型名称</div>
+              <input id="modelNameInput" type="text" value="RM-01 LLM" class="config-input" />
+            </div>
+            
+            <div class="config-row">
+              <div class="config-label">分析间隔（秒）</div>
+              <input id="intervalInput" type="number" min="1" max="60" value="12" class="config-input" />
+            </div>
+            
+            <div class="config-row">
+              <div class="config-label">每次采集帧数</div>
+              <input id="fpsInput" type="number" min="1" max="100" value="4" class="config-input" />
+            </div>
+          </div>
+        </div>
+        
+        <!-- 分析提示词配置 -->
+        <div id="promptTab" class="config-tab-content">
+          <div class="config-section">
+            <div class="config-section-title">💬 分析提示词配置</div>
+            
+            <div class="config-row">
+              <div class="config-label">分析模式</div>
+              <select id="promptSelect" class="config-input">
+                <option value="describe">场景描述</option>
+                <option value="objects">物体识别</option>
+                <option value="action">动作分析</option>
+                <option value="safety">安全监控</option>
+                <option value="custom">自定义</option>
+              </select>
+            </div>
+            
+            <div class="config-row" id="customPromptRow" style="display: none;">
+              <div class="config-label">自定义提示词</div>
+              <input id="customPrompt" type="text" placeholder="输入自定义分析问题..." class="config-input" />
+            </div>
+            
+            <div class="config-row" id="promptPreviewRow">
+              <div class="config-label">提示词预览</div>
+              <textarea id="promptPreview" readonly class="config-input" style="min-height: 100px; resize: vertical; background: #f0f2f5; font-size: 0.85rem; line-height: 1.5;"></textarea>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 洞察配置 -->
+        <div id="insightTab" class="config-tab-content">
+          <div class="config-section">
+            <div class="config-section-title">🔍 洞察分析配置</div>
+            
+            <div class="config-row">
+              <div class="config-label">洞察 API 地址</div>
+              <input id="insightApiUrlInput" type="text" value="http://192.168.0.159:58000/v1/chat/completions" class="config-input" />
+            </div>
+            
+            <div class="config-row">
+              <div class="config-label">洞察模型名称</div>
+              <input id="insightModelInput" type="text" value="RM-01 LLM" class="config-input" />
+            </div>
+          </div>
+        </div>
+        
+        <!-- 洞察区间配置 -->
+        <div id="intervalTab" class="config-tab-content">
+          <div class="config-section">
+            <div class="config-section-title">⏱️ 洞察触发区间</div>
+            
+            <div class="config-row">
+              <div class="config-label">60秒洞察区间</div>
+              <input id="insightIntervalInput" type="number" min="1" max="20" value="5" class="config-input" placeholder="条分析历史" />
+            </div>
+            
+            <div class="config-row">
+              <div class="config-label">15分钟洞察区间</div>
+              <input id="fifteenIntervalInput" type="number" min="1" max="30" value="15" class="config-input" placeholder="条60秒洞察" />
+            </div>
+            
+            <div class="config-row">
+              <div class="config-label">1小时洞察区间</div>
+              <input id="hourIntervalInput" type="number" min="1" max="10" value="4" class="config-input" placeholder="条15分钟洞察" />
+            </div>
+            
+            <div class="config-row">
+              <div class="config-label">每日洞察区间</div>
+              <input id="dayIntervalInput" type="number" min="1" max="30" value="24" class="config-input" placeholder="条1小时洞察" />
+            </div>
+          </div>
+        </div>
+        
+        <!-- 洞察提示词配置 -->
+        <div id="insightPromptTab" class="config-tab-content">
+          <div class="config-section">
+            <div class="config-section-title">📝 洞察系统提示词</div>
+            
+            <div class="config-row">
+              <div class="config-label">提示词类型</div>
+              <select id="insightSystemPromptSelect" class="config-input">
+                <option value="summary">综合总结</option>
+                <option value="trend">趋势分析</option>
+                <option value="security">安全监控</option>
+                <option value="anomaly">异常检测</option>
+                <option value="custom">自定义</option>
+              </select>
+            </div>
+            
+            <div class="config-row" id="customInsightPromptRow" style="display: none;">
+              <div class="config-label">自定义系统提示词</div>
+              <input id="customInsightSystemPrompt" type="text" placeholder="输入自定义系统提示词..." class="config-input" />
+            </div>
+            
+            <div class="config-row" id="insightPromptPreviewRow">
+              <div class="config-label">系统提示词预览</div>
+              <textarea id="insightPromptPreview" readonly class="config-input" style="min-height: 140px; resize: vertical; background: #f0f2f5; font-size: 0.85rem; line-height: 1.5;"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>
