@@ -1,8 +1,5 @@
 const video = document.getElementById('video');
-const startBtn = document.getElementById('startBtn');
-const stopBtn = document.getElementById('stopBtn');
-const startStreamBtn = document.getElementById('startStreamBtn');
-const stopStreamBtn = document.getElementById('stopStreamBtn');
+const toggleAnalysisBtn = document.getElementById('toggleAnalysisBtn');
 const deviceSelect = document.getElementById('deviceSelect');
 const refreshDevicesBtn = document.getElementById('refreshDevicesBtn');
 const statusSpan = document.getElementById('status');
@@ -36,13 +33,15 @@ const hourCountSpan = document.getElementById('hourCount');
 const dayCountSpan = document.getElementById('dayCount');
 
 let stream = null;
+let localCaptureTimer = null; // 用于从本地 video 捕获最新帧
+const captureCanvas = document.createElement('canvas');
+const captureCtx = captureCanvas.getContext('2d');
 let captureIntervalId = null; // 持续采样的定时器
 let analyzeIntervalId = null; // 定期分析的定时器
 let insightIntervalId = null; // 自动洞察的定时器
 let frameBuffer = []; // 帧缓存数组
 let historyCount = 0;
 let analysisHistory = []; // 存储分析历史的完整文本
-let ws = null; // WebSocket 连接
 let latestFrame = null; // 最新的帧数据
 let isStreamActive = false; // 视频流是否活跃
 let isAnalyzing = false; // 是否正在分析
@@ -80,112 +79,79 @@ const INSIGHT_SYSTEM_PROMPTS = {
 // 连接WebSocket并启动视频流
 async function startVideoStream() {
   try {
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${wsProtocol}//${window.location.hostname}:${window.location.port || 3000}`;
-    
-    ws = new WebSocket(wsUrl);
-    
-    ws.onopen = () => {
-      console.log('WebSocket connected');
-      
-      // 请求设备列表
-      ws.send(JSON.stringify({ type: 'list_devices' }));
-      
-      // 发送启动视频流命令
-      const selectedDevice = deviceSelect.value;
-      ws.send(JSON.stringify({ 
-        type: 'start_stream',
-        device: selectedDevice
-      }));
-    };
-    
-    ws.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      
-      if (message.type === 'frame') {
-        // 更新视频预览
-        const img = new Image();
-        img.onload = () => {
-          // 将视频元素改为显示图片
-          video.style.display = 'none';
-          let previewImg = document.getElementById('preview-img');
-          if (!previewImg) {
-            previewImg = document.createElement('img');
-            previewImg.id = 'preview-img';
-            previewImg.style.width = '100%';
-            previewImg.style.borderRadius = '8px';
-            video.parentNode.insertBefore(previewImg, video.nextSibling);
-          }
-          previewImg.src = 'data:image/jpeg;base64,' + message.data;
-          
-          // 保存最新帧用于采集
-          latestFrame = message.data;
-        };
-        img.src = 'data:image/jpeg;base64,' + message.data;
-      } else if (message.type === 'stream_started') {
-        isStreamActive = true;
-        startStreamBtn.disabled = true;
-        stopStreamBtn.disabled = false;
-        deviceSelect.disabled = true;
-        startBtn.disabled = false;
-        statusSpan.textContent = '视频流已启动';
-        console.log('Video stream started');
-      } else if (message.type === 'stream_stopped') {
-        isStreamActive = false;
-        startStreamBtn.disabled = false;
-        stopStreamBtn.disabled = true;
-        deviceSelect.disabled = false;
-        startBtn.disabled = true;
-        statusSpan.textContent = '视频流已停止';
-        console.log('Video stream stopped');
-      } else if (message.type === 'devices') {
-        // 更新设备列表
-        updateDeviceList(message.devices);
+    // 使用浏览器本地摄像头（UVC）作为信号源
+    const selectedDevice = deviceSelect.value;
+    const constraints = (selectedDevice && selectedDevice !== 'default')
+      ? { video: { deviceId: { exact: selectedDevice } }, audio: false }
+      : { video: true, audio: false };
+
+    // 停止已有流（如果存在）
+    if (stream) {
+      stream.getTracks().forEach(t => t.stop());
+      stream = null;
+    }
+
+    stream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = stream;
+    video.style.display = 'block';
+
+    // 启动本地帧捕获，定期把 video -> canvas -> base64 存入 latestFrame
+    if (localCaptureTimer) clearInterval(localCaptureTimer);
+    localCaptureTimer = setInterval(() => {
+      try {
+        const w = video.videoWidth || 640;
+        const h = video.videoHeight || 480;
+        captureCanvas.width = w;
+        captureCanvas.height = h;
+        captureCtx.drawImage(video, 0, 0, w, h);
+        const dataUrl = captureCanvas.toDataURL('image/jpeg', 0.8);
+        latestFrame = dataUrl.split(',')[1];
+      } catch (e) {
+        // video 可能尚未准备好
       }
-    };
-    
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      statusSpan.textContent = 'WebSocket连接错误';
-    };
-    
-    ws.onclose = () => {
-      console.log('WebSocket closed');
-      isStreamActive = false;
-      startStreamBtn.disabled = false;
-      stopStreamBtn.disabled = true;
-      deviceSelect.disabled = false;
-      startBtn.disabled = true;
-      if (isAnalyzing) {
-        stopAnalysis();
-      }
-    };
-    
+    }, 200);
+
+    isStreamActive = true;
+    toggleStreamBtn.textContent = '⏸️ 停止视频流';
+    toggleStreamBtn.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+    deviceSelect.disabled = true;
+    startBtn.disabled = false;
+    statusSpan.textContent = '本地视频流已启动';
   } catch (err) {
     console.error(err);
-    statusSpan.textContent = '启动视频流失败 - ' + err.message;
+    statusSpan.textContent = '启动本地视频流失败 - ' + (err.message || err);
   }
 }
 
 // 停止视频流
 function stopVideoStream() {
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: 'stop_stream' }));
+  // 停止本地捕获计时器
+  if (localCaptureTimer) {
+    clearInterval(localCaptureTimer);
+    localCaptureTimer = null;
   }
-  
+
+  // 停止媒体流
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+  }
+
   latestFrame = null;
-  
-  // 恢复视频元素显示
+  video.srcObject = null;
   video.style.display = 'block';
   const previewImg = document.getElementById('preview-img');
-  if (previewImg) {
-    previewImg.remove();
-  }
-  
+  if (previewImg) previewImg.remove();
+
   // 如果正在分析，先停止分析
-  if (isAnalyzing) {
-    stopAnalysis();
-  }
+  if (isAnalyzing) stopAnalysis();
+
+  isStreamActive = false;
+  toggleStreamBtn.textContent = '📹 启动视频流';
+  toggleStreamBtn.style.background = 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)';
+  deviceSelect.disabled = false;
+  startBtn.disabled = true;
+  statusSpan.textContent = '本地视频流已停止';
 }
 
 // 更新设备列表
@@ -204,51 +170,60 @@ function updateDeviceList(devices) {
   }
 }
 
-// 请求设备列表
-function requestDeviceList() {
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: 'list_devices' }));
-  } else {
-    // 如果WebSocket未连接，临时连接以获取设备列表
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${wsProtocol}//${window.location.hostname}:${window.location.port || 3000}`;
-    const tempWs = new WebSocket(wsUrl);
-    
-    tempWs.onopen = () => {
-      tempWs.send(JSON.stringify({ type: 'list_devices' }));
-    };
-    
-    tempWs.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      if (message.type === 'devices') {
-        updateDeviceList(message.devices);
-        tempWs.close();
+// 请求本地摄像头设备列表（使用 navigator.mediaDevices）
+async function requestDeviceList() {
+  try {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+      deviceSelect.innerHTML = '<option value="default">设备枚举不可用</option>';
+      return;
+    }
+
+    let devices = await navigator.mediaDevices.enumerateDevices();
+    let videoDevices = devices.filter(d => d.kind === 'videoinput');
+
+    // 如果标签为空（未授权），请求一次权限以便获取设备标签
+    if (videoDevices.length > 0 && videoDevices.every(d => !d.label)) {
+      try {
+        const tmpStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        tmpStream.getTracks().forEach(t => t.stop());
+        devices = await navigator.mediaDevices.enumerateDevices();
+        videoDevices = devices.filter(d => d.kind === 'videoinput');
+      } catch (e) {
+        // 用户拒绝权限或其他错误，继续使用无标签设备列表
       }
-    };
-    
-    tempWs.onerror = (error) => {
-      console.error('Failed to get device list:', error);
-      deviceSelect.innerHTML = '<option value="default">默认设备</option>';
-      tempWs.close();
-    };
+    }
+
+    if (videoDevices.length === 0) {
+      deviceSelect.innerHTML = '<option value="default">无视频设备</option>';
+      return;
+    }
+
+    const list = videoDevices.map((d, i) => ({ id: d.deviceId, name: d.label || `摄像头 ${i + 1}` }));
+    updateDeviceList(list);
+  } catch (err) {
+    console.error('无法枚举设备', err);
+    deviceSelect.innerHTML = '<option value="default">无法获取设备</option>';
   }
 }
 
-// 开始分析（需要视频流已启动）
+// 开始分析（自动启动视频流）
 async function startAnalysis() {
+  // 如果视频流未启动，先启动
   if (!isStreamActive) {
-    alert('请先启动视频流');
-    return;
+    await startVideoStream();
+    // 等待视频流稳定
+    await new Promise(resolve => setTimeout(resolve, 500));
   }
   
   try {
     const analyzeInterval = parseInt(intervalInput.value) || 12; // 分析间隔（秒）
     const totalFrames = parseInt(fpsInput.value) || 4; // 总帧数
     
-    startBtn.disabled = true;
-    stopBtn.disabled = false;
+    toggleAnalysisBtn.textContent = '⏹️ 停止分析';
+    toggleAnalysisBtn.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
     intervalInput.disabled = true;
     fpsInput.disabled = true;
+    deviceSelect.disabled = true;
     
     isAnalyzing = true;
     const statusContainer = document.getElementById('statusContainer');
@@ -302,6 +277,8 @@ async function startAnalysis() {
 
 // 停止分析
 function stopAnalysis() {
+  console.log('stopAnalysis called, isAnalyzing:', isAnalyzing);
+  
   if (captureIntervalId) clearInterval(captureIntervalId);
   if (analyzeIntervalId) clearInterval(analyzeIntervalId);
   if (insightIntervalId) clearInterval(insightIntervalId);
@@ -311,13 +288,25 @@ function stopAnalysis() {
   frameBuffer = []; // 清空缓存
   
   isAnalyzing = false;
-  startBtn.disabled = false;
-  stopBtn.disabled = true;
+  
+  // 停止视频流
+  stopVideoStream();
+  
+  // 确保按钮元素存在
+  if (toggleAnalysisBtn) {
+    toggleAnalysisBtn.textContent = '▶️ 开始分析';
+    toggleAnalysisBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+    console.log('Button updated to:', toggleAnalysisBtn.textContent);
+  } else {
+    console.error('toggleAnalysisBtn not found!');
+  }
+  
   intervalInput.disabled = false;
   fpsInput.disabled = false;
+  deviceSelect.disabled = false;
   const statusContainer = document.getElementById('statusContainer');
   statusContainer.classList.remove('active', 'error');
-  statusSpan.textContent = isStreamActive ? '视频流运行中' : '已停止';
+  statusSpan.textContent = '已停止';
 }
 
 async function sendFramesForAnalysis() {
@@ -459,9 +448,17 @@ async function sendFramesForAnalysis() {
   }
 }
 
-// 视频流控制按钮
-startStreamBtn.addEventListener('click', startVideoStream);
-stopStreamBtn.addEventListener('click', stopVideoStream);
+// 分析控制按钮（联动视频流）
+toggleAnalysisBtn.addEventListener('click', () => {
+  console.log('Toggle button clicked, current isAnalyzing:', isAnalyzing);
+  if (isAnalyzing) {
+    console.log('Calling stopAnalysis...');
+    stopAnalysis();
+  } else {
+    console.log('Calling startAnalysis...');
+    startAnalysis();
+  }
+});
 
 // 刷新设备列表按钮
 refreshDevicesBtn.addEventListener('click', () => {
@@ -474,10 +471,6 @@ refreshDevicesBtn.addEventListener('click', () => {
   }, 1000);
 });
 
-// 分析控制按钮
-startBtn.addEventListener('click', startAnalysis);
-stopBtn.addEventListener('click', stopAnalysis);
-
 // 页面加载时获取设备列表
 window.addEventListener('DOMContentLoaded', () => {
   requestDeviceList();
@@ -488,7 +481,7 @@ window.addEventListener('beforeunload', () => {
   if (isAnalyzing) {
     stopAnalysis();
   }
-  if (ws) {
+  if (isStreamActive) {
     stopVideoStream();
   }
 });
@@ -872,19 +865,6 @@ function openConfig() {
   }, 50);
 }
 
-function closeConfig() {
-  const modal = document.getElementById('configModal');
-  modal.classList.remove('active');
-}
-
-// 点击模态框外部关闭
-document.addEventListener('click', (e) => {
-  const configModal = document.getElementById('configModal');
-  if (e.target === configModal) {
-    closeConfig();
-  }
-});
-
 // 更新分析提示词预览
 function updatePromptPreview() {
   const promptSelect = document.getElementById('promptSelect');
@@ -924,20 +904,25 @@ document.getElementById('customPrompt').addEventListener('input', updatePromptPr
 document.getElementById('insightSystemPromptSelect').addEventListener('change', updateInsightPromptPreview);
 document.getElementById('customInsightSystemPrompt').addEventListener('input', updateInsightPromptPreview);
 
-// 暴露配置函数到全局
-window.openConfig = openConfig;
-window.closeConfig = closeConfig;
+// 初始化提示词预览
+document.addEventListener('DOMContentLoaded', () => {
+  updatePromptPreview();
+  updateInsightPromptPreview();
+});
 
-// 切换配置选项卡
+// 配置选项卡切换函数
 function switchConfigTab(tabName) {
-  // 移除所有选项卡的激活状态
-  document.querySelectorAll('.config-tab').forEach(tab => {
-    tab.classList.remove('active');
+  // 移除所有按钮的激活状态
+  document.querySelectorAll('.config-tab-btn').forEach(btn => {
+    btn.style.color = '#999';
+    btn.style.borderBottom = '3px solid transparent';
+    btn.style.background = 'none';
+    btn.classList.remove('active');
   });
   
-  // 隐藏所有内容
-  document.querySelectorAll('.config-tab-content').forEach(content => {
-    content.classList.remove('active');
+  // 隐藏所有配置面板
+  document.querySelectorAll('.config-tab-panel').forEach(panel => {
+    panel.style.display = 'none';
   });
   
   // 激活当前选项卡
@@ -948,17 +933,23 @@ function switchConfigTab(tabName) {
     'interval': 3,
     'insightPrompt': 4
   };
+  const tabs = document.querySelectorAll('.config-tab-btn');
+  const currentTab = tabs[tabMap[tabName]];
+  if (currentTab) {
+    currentTab.style.color = '#667eea';
+    currentTab.style.borderBottom = '3px solid #667eea';
+    currentTab.style.background = 'white';
+    currentTab.classList.add('active');
+  }
   
-  const tabs = document.querySelectorAll('.config-tab');
-  tabs[tabMap[tabName]].classList.add('active');
-  
-  // 显示对应内容
-  const contentId = tabName + 'Tab';
-  const content = document.getElementById(contentId);
-  if (content) {
-    content.classList.add('active');
+  // 显示对应配置面板
+  const panelId = tabName + 'ConfigTab';
+  const panel = document.getElementById(panelId);
+  if (panel) {
+    panel.style.display = 'block';
   }
 }
 
-// 暴露配置选项卡切换函数到全局
+// 暴露函数到全局
 window.switchConfigTab = switchConfigTab;
+window.switchInsightTab = switchInsightTab;
