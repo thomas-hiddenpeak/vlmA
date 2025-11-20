@@ -32,11 +32,11 @@ npm install
 npm start
 ```
 
-后端服务运行在 `http://localhost:3000`
+后端服务运行在 `http://localhost:43003`
 
 ### 2. 在浏览器中测试
 
-直接访问：`http://localhost:3000`
+直接访问：`http://localhost:43003`
 
 ### 3. 启动 Electron 桌面应用
 
@@ -131,6 +131,6 @@ npm run build:linux   # Linux
 1. **图标要求**：确保图标文件存在且格式正确
 2. **依赖安装**：根目录和 server 目录都需要安装依赖
 3. **端口配置**：
-   - 开发模式服务器：3000
+   - 开发模式服务器：43003
    - Electron 内置服务器：51098
 4. **安全性**：生产环境建议使用 HTTPS

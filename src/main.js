@@ -3,7 +3,7 @@ const path = require('path');
 const http = require('http');
 const fs = require('fs');
 const url = require('url');
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
 
 // 保持对窗口对象的全局引用
 let mainWindow;
@@ -160,6 +160,9 @@ function createWindow() {
 // 设置应用名称
 app.setName('vlmA 视觉分析监控系统');
 
+// 后端端口（可通过环境变量覆盖）
+const BACKEND_PORT = process.env.PORT || 43003;
+
 // 确保应用为单实例，防止重复启动导致资源竞用或无限递归
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
@@ -209,6 +212,27 @@ function startBackendServer() {
       reject(error);
       return;
     }
+
+    // 检查目标端口是否已被其它进程占用（帮助定位 BACKEND_PORT 被 VSCode 等占用的情况）
+    function getPortOwner(port) {
+      try {
+        const out = execSync(`lsof -nP -iTCP:${port} -sTCP:LISTEN -Pn 2>/dev/null`, { encoding: 'utf8' });
+        if (out && out.trim()) return out.trim();
+        return null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    const portOwner = getPortOwner(BACKEND_PORT);
+    if (portOwner) {
+      log(`[Backend] 发现端口 ${BACKEND_PORT} 已被占用:`);
+      log(portOwner);
+      // 如果端口被占用，提示用户并拒绝启动后端（避免请求挂起）
+      const err = new Error(`端口 ${BACKEND_PORT} 已被其它进程占用，后端无法启动。请停止占用该端口的程序或设置环境变量 PORT。`);
+      reject(err);
+      return;
+    }
     
     let resolved = false;
     
@@ -223,7 +247,20 @@ function startBackendServer() {
       log('[Backend Error] require server failed: ' + (e && e.message ? e.message : e));
       // 仍然尝试用子进程启动 node（作为兜底），但避免使用 process.execPath（会启动 electron 本体）
       try {
-        backendProcess = spawn('node', [serverPath], {
+        // 尝试查找系统上的 node 可执行路径，避免 spawn ENOENT
+        let nodeExe = null;
+        try {
+          nodeExe = execSync('which node', { encoding: 'utf8' }).trim() || null;
+        } catch (whichErr) {
+          nodeExe = null;
+        }
+
+        if (!nodeExe) {
+          log('[Backend Error] 未能找到系统 node，可尝试安装 Node.js 或确保 GUI 启动时 PATH 可见。');
+          throw new Error('系统未找到 node，可尝试安装 Node.js 或确保 PATH 包含 node');
+        }
+
+        backendProcess = spawn(nodeExe, [serverPath], {
           cwd: serverDir,
           env: { ...process.env, NODE_ENV: 'production' },
           stdio: ['pipe', 'pipe', 'pipe']

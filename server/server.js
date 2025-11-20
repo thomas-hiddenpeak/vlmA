@@ -313,7 +313,7 @@ app.get('/camera/capture', async (req, res) => {
   }
 });
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 43003;
 const server = app.listen(port, () => {
   console.log(`Proxy server running on http://0.0.0.0:${port}`);
   console.log(`Forwarding to: ${MODEL_URL}`);

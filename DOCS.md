@@ -31,7 +31,7 @@ npm install
 npm start
 ```
 
-然后在浏览器访问 `http://localhost:3000`
+然后在浏览器访问 `http://localhost:43003`
 
 ### 方式二：Electron 桌面应用
 

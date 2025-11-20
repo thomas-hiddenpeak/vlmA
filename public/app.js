@@ -1,5 +1,5 @@
 // API 基础 URL - 后端服务器地址
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = 'http://localhost:43003';
 
 const video = document.getElementById('video');
 const toggleAnalysisBtn = document.getElementById('toggleAnalysisBtn');

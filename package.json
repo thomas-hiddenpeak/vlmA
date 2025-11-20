@@ -11,11 +11,11 @@
   "license": "MIT",
   "scripts": {
     "start": "electron .",
-    "postinstall": "cd server && npm install --production",
-    "build": "cd server && npm install --production && cd .. && electron-builder",
-    "build:win": "cd server && npm install --production && cd .. && electron-builder --win",
-    "build:mac": "cd server && npm install --production && cd .. && electron-builder --mac",
-    "build:linux": "cd server && npm install --production && cd .. && electron-builder --linux",
+    "postinstall": "cd server && npm ci --only=production",
+    "build": "cd server && npm ci --only=production && cd .. && electron-builder",
+    "build:win": "cd server && npm ci --only=production && cd .. && electron-builder --win",
+    "build:mac": "cd server && npm ci --only=production && cd .. && electron-builder --mac",
+    "build:linux": "cd server && npm ci --only=production && cd .. && electron-builder --linux",
     "dist": "npm run build"
   },
   "keywords": [
@@ -55,7 +55,8 @@
       "!assets/source"
     ],
     "asarUnpack": [
-      "server/**/*"
+      "server/**/*",
+      "server/node_modules/**/*"
     ],
     "mac": {
       "icon": "favicon_io/android-chrome-512x512.png",

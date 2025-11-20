@@ -45,11 +45,11 @@ npm install
 npm start
 ```
 
-服务默认运行在 `http://localhost:3000`
+服务默认运行在 `http://localhost:43003`
 
 ### 3. 打开浏览器
 
-访问 `http://localhost:3000/`
+访问 `http://localhost:43003/`
 
 **重要**：摄像头访问需要安全上下文（HTTPS 或 localhost），首次访问需要授权摄像头权限。
 
@@ -159,7 +159,7 @@ PORT=4000 npm start
 
 ### Q: 在非 localhost 环境无法访问摄像头？
 **A**: 浏览器安全策略要求必须在 HTTPS 环境下才能访问摄像头。建议：
-- 本地测试使用 `http://localhost:3000`
+- 本地测试使用 `http://localhost:43003`
 - 远程部署必须配置 HTTPS（可使用 Let's Encrypt）
 
 ## 桌面应用打包
