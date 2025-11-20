@@ -1,6 +1,6 @@
-# 视觉分析监控系统
+# vlmA 视觉分析监控系统
 
-基于 AI 的实时视频流分析平台，支持本地 UVC 摄像头采集、多层级洞察分析和流式输出。
+基于 AI 的实时视频流分析平台，支持本地 UVC 摄像头采集、多层级洞察分析和流式输出。支持打包为跨平台桌面应用。
 
 ## 功能特性
 
@@ -162,8 +162,58 @@ PORT=4000 npm start
 - 本地测试使用 `http://localhost:3000`
 - 远程部署必须配置 HTTPS（可使用 Let's Encrypt）
 
+## 桌面应用打包
+
+### 安装打包依赖
+
+在项目根目录执行：
+
+```bash
+npm install
+```
+
+### 本地测试桌面应用
+
+```bash
+npm start
+```
+
+### 构建各平台安装包
+
+```bash
+# 构建所有平台
+npm run build
+
+# 构建 Windows 版本
+npm run build:win
+
+# 构建 macOS 版本
+npm run build:mac
+
+# 构建 Linux 版本
+npm run build:linux
+```
+
+构建完成后，安装包位于 `dist/` 目录：
+- Windows: `.exe` 安装程序和便携版
+- macOS: `.dmg` 镜像文件（支持 Intel 和 Apple Silicon）
+- Linux: `.AppImage` 和 `.deb` 包
+
+### GitHub Actions 自动构建
+
+项目已配置 GitHub Actions 自动构建。创建版本标签即可触发：
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+构建完成后会自动创建 GitHub Release 并上传所有平台的安装包。
+
 ## 开发计划
 
+- [x] Electron 桌面应用打包
+- [x] GitHub Actions 自动构建和发布
 - [ ] 修复停止分析按钮状态切换问题
 - [ ] 支持录制功能（保存视频片段）
 - [ ] 添加分辨率选择
@@ -174,3 +224,4 @@ PORT=4000 npm start
 ## License
 
 MIT
+

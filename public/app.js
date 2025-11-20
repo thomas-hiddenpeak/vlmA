@@ -1,3 +1,6 @@
+// API 基础 URL - 后端服务器地址
+const API_BASE_URL = 'http://localhost:3000';
+
 const video = document.getElementById('video');
 const toggleAnalysisBtn = document.getElementById('toggleAnalysisBtn');
 const deviceSelect = document.getElementById('deviceSelect');
@@ -112,10 +115,10 @@ async function startVideoStream() {
     }, 200);
 
     isStreamActive = true;
-    toggleStreamBtn.textContent = '⏸️ 停止视频流';
-    toggleStreamBtn.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+    // toggleStreamBtn.textContent = '⏸️ 停止视频流';
+    // toggleStreamBtn.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
     deviceSelect.disabled = true;
-    startBtn.disabled = false;
+    // startBtn.disabled = false;
     statusSpan.textContent = '本地视频流已启动';
   } catch (err) {
     console.error(err);
@@ -147,10 +150,10 @@ function stopVideoStream() {
   if (isAnalyzing) stopAnalysis();
 
   isStreamActive = false;
-  toggleStreamBtn.textContent = '📹 启动视频流';
-  toggleStreamBtn.style.background = 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)';
+  // toggleStreamBtn.textContent = '📹 启动视频流';
+  // toggleStreamBtn.style.background = 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)';
   deviceSelect.disabled = false;
-  startBtn.disabled = true;
+  // startBtn.disabled = true;
   statusSpan.textContent = '本地视频流已停止';
 }
 
@@ -389,7 +392,7 @@ async function sendFramesForAnalysis() {
     let fullText = '';
     
     // 使用 fetch 接收流式响应
-    const resp = await fetch('/analyze', { method: 'POST', body: form });
+    const resp = await fetch(`${API_BASE_URL}/analyze`, { method: 'POST', body: form });
     
     if (!resp.ok) {
       throw new Error(`HTTP error! status: ${resp.status}`);

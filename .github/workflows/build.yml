@@ -1,0 +1,85 @@
+name: Build and Release Electron App
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # 当推送版本标签时触发
+  workflow_dispatch:  # 允许手动触发
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build Electron app
+      run: npm run build
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: electron-app-${{ matrix.os }}
+        path: dist/
+        
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      
+    - name: Organize release files
+      run: |
+        mkdir -p release
+        # Windows files
+        if [ -d "electron-app-windows-latest" ]; then
+          find electron-app-windows-latest -name "*.exe" -o -name "*.nsis" -o -name "*.msi" | while read file; do
+            cp "$file" "release/$(basename "$file")"
+          done
+        fi
+        # macOS files  
+        if [ -d "electron-app-macos-latest" ]; then
+          find electron-app-macos-latest -name "*.dmg" | while read file; do
+            cp "$file" "release/$(basename "$file")"
+          done
+        fi
+        # Linux files
+        if [ -d "electron-app-ubuntu-latest" ]; then
+          find electron-app-ubuntu-latest -name "*.AppImage" -o -name "*.deb" | while read file; do
+            cp "$file" "release/$(basename "$file")"
+          done
+        fi
+        ls -la release/
+      
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: release/*
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

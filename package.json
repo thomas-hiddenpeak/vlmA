@@ -1,0 +1,106 @@
+{
+  "name": "vlma-vision-monitor",
+  "version": "0.1.0",
+  "description": "vlmA 视觉分析监控系统 - 跨平台桌面应用",
+  "main": "src/main.js",
+  "homepage": "https://github.com/thomas-hiddenpeak/vlmA",
+  "author": {
+    "name": "thomas-hiddenpeak",
+    "email": "thomas@hiddenpeak.com"
+  },
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "postinstall": "cd server && npm install",
+    "build": "npm run postinstall && electron-builder",
+    "build:win": "npm run postinstall && electron-builder --win",
+    "build:mac": "npm run postinstall && electron-builder --mac",
+    "build:linux": "npm run postinstall && electron-builder --linux",
+    "dist": "npm run build"
+  },
+  "keywords": [
+    "vision",
+    "AI",
+    "monitoring",
+    "vllm",
+    "analysis",
+    "webcam",
+    "desktop-app"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thomas-hiddenpeak/vlmA.git"
+  },
+  "devDependencies": {
+    "electron": "^26.0.0",
+    "electron-builder": "^24.6.3"
+  },
+  "dependencies": {},
+  "build": {
+    "appId": "com.hiddenpeak.vlma",
+    "productName": "vlmA Vision Monitor",
+    "directories": {
+      "output": "dist",
+      "buildResources": "assets"
+    },
+    "files": [
+      "src/**/*",
+      "public/**/*",
+      "server/**/*",
+      "favicon_io/**/*",
+      "assets/**/*",
+      "!**/*.md",
+      "!.github",
+      "!assets/source"
+    ],
+    "mac": {
+      "icon": "favicon_io/android-chrome-512x512.png",
+      "category": "public.app-category.developer-tools",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["arm64", "x64"]
+        }
+      ],
+      "identity": null,
+      "gatekeeperAssess": false,
+      "hardenedRuntime": false,
+      "entitlements": null,
+      "entitlementsInherit": null
+    },
+    "win": {
+      "icon": "favicon_io/android-chrome-256x256.png",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "linux": {
+      "icon": "favicon_io/android-chrome-512x512.png",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        }
+      ],
+      "category": "Development"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "publish": null
+  }
+}
