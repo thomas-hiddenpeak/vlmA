@@ -160,6 +160,20 @@ function createWindow() {
 // 设置应用名称
 app.setName('vlmA 视觉分析监控系统');
 
+// 确保应用为单实例，防止重复启动导致资源竞用或无限递归
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  log('另一个实例已存在，退出当前实例。');
+  app.quit();
+}
+app.on('second-instance', () => {
+  // 当尝试启动第二个实例时，聚焦到已有窗口
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+  }
+});
+
 // 启动后端服务器
 function startBackendServer() {
   return new Promise((resolve, reject) => {
@@ -198,59 +212,64 @@ function startBackendServer() {
     
     let resolved = false;
     
-    // 启动 Node.js 后端进程
-    backendProcess = spawn(process.execPath, [serverPath], {
-      cwd: serverDir,
-      env: { ...process.env, NODE_ENV: 'production' },
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
-    
-    backendProcess.stdout.on('data', (data) => {
-      const output = data.toString();
-      log('[Backend] ' + output.trim());
-      
-      // 检测服务器是否已启动
-      if (!resolved && (output.includes('Server running') || output.includes('running on') || output.includes('listening'))) {
-        resolved = true;
-        resolve();
+    // 在主进程中直接加载后端服务器模块（避免 spawn 造成递归启动）
+    try {
+      // 将 serverPath 用作 require 的路径（server 目录已配置为 asarUnpack）
+      require(serverPath);
+      log('[Backend] 已在主进程中加载 server.js');
+      resolved = true;
+      resolve();
+    } catch (e) {
+      log('[Backend Error] require server failed: ' + (e && e.message ? e.message : e));
+      // 仍然尝试用子进程启动 node（作为兜底），但避免使用 process.execPath（会启动 electron 本体）
+      try {
+        backendProcess = spawn('node', [serverPath], {
+          cwd: serverDir,
+          env: { ...process.env, NODE_ENV: 'production' },
+          stdio: ['pipe', 'pipe', 'pipe']
+        });
+
+        backendProcess.stdout.on('data', (data) => {
+          const output = data.toString();
+          log('[Backend] ' + output.trim());
+          if (!resolved && (output.includes('Server running') || output.includes('running on') || output.includes('listening'))) {
+            resolved = true;
+            resolve();
+          }
+        });
+
+        backendProcess.stderr.on('data', (data) => {
+          const error = data.toString();
+          log('[Backend Error] ' + error.trim());
+          if (!resolved && (error.includes('Error:') || error.includes('Cannot find module'))) {
+            resolved = true;
+            reject(new Error(error));
+          }
+        });
+
+        backendProcess.on('error', (error) => {
+          log('后端服务器子进程启动失败: ' + (error && error.message ? error.message : error));
+          if (!resolved) {
+            resolved = true;
+            reject(error);
+          }
+        });
+
+        backendProcess.on('close', (code) => {
+          log('后端服务器子进程退出，代码: ' + code);
+          if (!resolved && code !== 0) {
+            resolved = true;
+            reject(new Error(`后端服务器异常退出，代码: ${code}`));
+          }
+        });
+      } catch (err) {
+        log('后端启动最终失败: ' + (err && err.message ? err.message : err));
+        if (!resolved) {
+          resolved = true;
+          reject(err);
+        }
       }
-    });
-    
-    backendProcess.stderr.on('data', (data) => {
-      const error = data.toString();
-      console.error('[Backend Error]', error);
-      
-      // 如果是致命错误，拒绝 Promise
-      if (!resolved && (error.includes('Error:') || error.includes('Cannot find module'))) {
-        resolved = true;
-        reject(new Error(error));
-      }
-    });
-    
-    backendProcess.on('error', (error) => {
-      console.error('后端服务器启动失败:', error);
-      if (!resolved) {
-        resolved = true;
-        reject(error);
-      }
-    });
-    
-    backendProcess.on('close', (code) => {
-      console.log(`后端服务器进程退出，代码: ${code}`);
-      if (!resolved && code !== 0) {
-        resolved = true;
-        reject(new Error(`后端服务器异常退出，代码: ${code}`));
-      }
-    });
-    
-    // 等待 3 秒后如果还没有 resolve，就超时处理
-    setTimeout(() => {
-      if (!resolved) {
-        console.log('等待超时，假定后端已启动');
-        resolved = true;
-        resolve();
-      }
-    }, 3000);
+    }
   });
 }
 
