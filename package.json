@@ -1,7 +1,7 @@
 {
-  "name": "vlma-vision-monitor",
+  "name": "rminte-multimodal-engine",
   "version": "0.1.0",
-  "description": "vlmA 视觉分析监控系统 - 跨平台桌面应用",
+  "description": "RMinte 多模态分析引擎 - 跨平台桌面应用",
   "main": "src/main.js",
   "homepage": "https://github.com/thomas-hiddenpeak/vlmA",
   "author": {
@@ -37,8 +37,8 @@
   },
   "dependencies": {},
   "build": {
-    "appId": "com.hiddenpeak.vlma",
-    "productName": "vlmA Vision Monitor",
+    "appId": "com.hiddenpeak.rminte",
+    "productName": "RMinte 多模态分析引擎",
     "directories": {
       "output": "dist",
       "buildResources": "assets"

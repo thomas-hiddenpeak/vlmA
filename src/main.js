@@ -158,7 +158,7 @@ function createWindow() {
 }
 
 // 设置应用名称
-app.setName('vlmA 视觉分析监控系统');
+app.setName('RMinte 多模态分析引擎');
 
 // 后端端口（可通过环境变量覆盖）
 const BACKEND_PORT = process.env.PORT || 43003;
