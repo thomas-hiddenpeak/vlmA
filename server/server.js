@@ -646,3 +646,41 @@ function stopCameraStream() {
     console.log('Camera stream stopped');
   }
 }
+
+// 优雅退出处理
+const gracefulShutdown = () => {
+  console.log('Received kill signal, shutting down gracefully');
+  
+  stopCameraStream();
+
+  if (wss) {
+    wss.clients.forEach((client) => {
+      try {
+        client.terminate();
+      } catch (e) {
+        console.error('Error terminating ws client:', e);
+      }
+    });
+    wss.close(() => {
+      console.log('WebSocket server closed');
+    });
+  }
+
+  if (server) {
+    server.close(() => {
+      console.log('HTTP server closed');
+      process.exit(0);
+    });
+  } else {
+    process.exit(0);
+  }
+
+  // 强制退出超时
+  setTimeout(() => {
+    console.error('Could not close connections in time, forcefully shutting down');
+    process.exit(1);
+  }, 5000);
+};
+
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
