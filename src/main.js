@@ -3,7 +3,7 @@ const path = require('path');
 const http = require('http');
 const fs = require('fs');
 const url = require('url');
-const { spawn, execSync } = require('child_process');
+const { spawn, fork, execSync } = require('child_process');
 
 // 保持对窗口对象的全局引用
 let mainWindow;
@@ -98,15 +98,55 @@ function createLocalServer() {
       });
     });
     
+    // 前端服务器端口
+    const FRONTEND_PORT = 51098;
+    
+    // 监听端口前先检查并清理
+    function ensurePortAvailable(port) {
+      try {
+        const lsofOutput = execSync(`lsof -nP -iTCP:${port} -sTCP:LISTEN -t 2>/dev/null`, { encoding: 'utf8' }).trim();
+        if (lsofOutput) {
+          const pids = lsofOutput.split('\n').filter(pid => pid);
+          log(`[Frontend] 端口 ${port} 被占用，PID: ${pids.join(', ')}`);
+          pids.forEach(pid => {
+            try {
+              process.kill(parseInt(pid), 'SIGTERM');
+              log(`[Frontend] 已终止进程 ${pid}`);
+            } catch (e) {
+              // 忽略
+            }
+          });
+          // 等待端口释放
+          execSync('sleep 0.5', { stdio: 'ignore' });
+        }
+      } catch (e) {
+        // 忽略错误
+      }
+    }
+    
+    ensurePortAvailable(FRONTEND_PORT);
+    
     // 监听端口
-    server.listen(51098, 'localhost', () => {
-      log('本地服务器已启动: http://localhost:51098');
+    server.listen(FRONTEND_PORT, 'localhost', () => {
+      log(`本地服务器已启动: http://localhost:${FRONTEND_PORT}`);
       resolve(server);
     });
     
     server.on('error', (err) => {
-      console.error('服务器启动失败:', err);
-      reject(err);
+      if (err.code === 'EADDRINUSE') {
+        log(`[Frontend] 端口 ${FRONTEND_PORT} 仍被占用，尝试强制清理...`);
+        ensurePortAvailable(FRONTEND_PORT);
+        // 重试
+        setTimeout(() => {
+          server.listen(FRONTEND_PORT, 'localhost', () => {
+            log(`本地服务器已启动: http://localhost:${FRONTEND_PORT}`);
+            resolve(server);
+          });
+        }, 1000);
+      } else {
+        console.error('服务器启动失败:', err);
+        reject(err);
+      }
     });
   });
 }
@@ -218,41 +258,85 @@ function startBackendServer() {
       }
     }
 
+    function killProcessOnPort(port) {
+      try {
+        // 获取占用端口的进程信息
+        const lsofOutput = execSync(`lsof -nP -iTCP:${port} -sTCP:LISTEN -t 2>/dev/null`, { encoding: 'utf8' }).trim();
+        if (lsofOutput) {
+          const pids = lsofOutput.split('\n').filter(pid => pid);
+          log(`[Backend] 发现端口 ${port} 被进程占用，PID: ${pids.join(', ')}`);
+          
+          // 尝试优雅终止进程
+          pids.forEach(pid => {
+            try {
+              process.kill(parseInt(pid), 'SIGTERM');
+              log(`[Backend] 已发送 SIGTERM 信号到进程 ${pid}`);
+            } catch (e) {
+              log(`[Backend] 无法终止进程 ${pid}: ${e.message}`);
+            }
+          });
+          
+          // 等待进程退出
+          const maxWait = 3000; // 最多等待3秒
+          const startTime = Date.now();
+          while (Date.now() - startTime < maxWait) {
+            if (!getPortOwner(port)) {
+              log(`[Backend] 端口 ${port} 已释放`);
+              return true;
+            }
+            // 短暂休眠
+            execSync('sleep 0.1', { stdio: 'ignore' });
+          }
+          
+          // 如果优雅终止失败，尝试强制终止
+          pids.forEach(pid => {
+            try {
+              process.kill(parseInt(pid), 'SIGKILL');
+              log(`[Backend] 已发送 SIGKILL 信号到进程 ${pid}`);
+            } catch (e) {
+              // 进程可能已经退出
+            }
+          });
+          
+          return !getPortOwner(port);
+        }
+        return true;
+      } catch (e) {
+        log(`[Backend] 清理端口时出错: ${e.message}`);
+        return false;
+      }
+    }
+
     const portOwner = getPortOwner(BACKEND_PORT);
     if (portOwner) {
       log(`[Backend] 发现端口 ${BACKEND_PORT} 已被占用:`);
       log(portOwner);
-      // 如果端口被占用，提示用户并拒绝启动后端（避免请求挂起）
-      const err = new Error(`端口 ${BACKEND_PORT} 已被其它进程占用，后端无法启动。请停止占用该端口的程序或设置环境变量 PORT。`);
-      reject(err);
-      return;
+      
+      // 尝试清理端口
+      log(`[Backend] 尝试清理端口 ${BACKEND_PORT}...`);
+      if (killProcessOnPort(BACKEND_PORT)) {
+        log(`[Backend] 端口 ${BACKEND_PORT} 已成功清理`);
+      } else {
+        // 如果清理失败，提示用户手动处理
+        const err = new Error(`端口 ${BACKEND_PORT} 被其它进程占用且无法自动清理。请手动停止占用该端口的程序。`);
+        reject(err);
+        return;
+      }
     }
     
     let resolved = false;
     
-    // 直接使用子进程启动 node（推荐方式）
+    // 使用 fork 来启动 Node.js 脚本
+    // fork 会使用 Node.js 而不是 Electron 来执行脚本
+    log('[Backend] 使用 fork 启动后端服务器');
+    log('[Backend] 服务器路径: ' + serverPath);
+    log('[Backend] 工作目录: ' + serverDir);
+    
     try {
-        // 尝试查找系统上的 node 可执行路径，避免 spawn ENOENT
-        let nodeExe = null;
-        try {
-          nodeExe = execSync('which node', { encoding: 'utf8' }).trim() || null;
-        } catch (whichErr) {
-          nodeExe = null;
-        }
-
-        if (!nodeExe) {
-          log('[Backend Error] 未能找到系统 node，可尝试安装 Node.js 或确保 GUI 启动时 PATH 可见。');
-          throw new Error('系统未找到 node，可尝试安装 Node.js 或确保 PATH 包含 node');
-        }
-
-        log('[Backend] 使用 node 启动: ' + nodeExe);
-        log('[Backend] 服务器路径: ' + serverPath);
-        log('[Backend] 工作目录: ' + serverDir);
-
-        backendProcess = spawn(nodeExe, [serverPath], {
+        backendProcess = fork(serverPath, [], {
           cwd: serverDir,
           env: { ...process.env, NODE_ENV: 'production', PORT: String(BACKEND_PORT) },
-          stdio: ['pipe', 'pipe', 'pipe']
+          silent: true  // 捕获 stdout/stderr
         });
 
         backendProcess.stdout.on('data', (data) => {
