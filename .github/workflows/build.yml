@@ -32,6 +32,7 @@ jobs:
       
     - name: Extract version from tag
       if: startsWith(github.ref, 'refs/tags/v')
+      shell: bash
       run: |
         VERSION=${GITHUB_REF#refs/tags/v}
         echo "VERSION=$VERSION" >> $GITHUB_ENV
@@ -45,6 +46,7 @@ jobs:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
     - name: Verify build output
+      shell: bash
       run: |
         echo "=== Build output structure ==="
         ls -la dist/
