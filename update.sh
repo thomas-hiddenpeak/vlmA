@@ -57,7 +57,9 @@ cd ..
 # 4. 重启 PM2 服务
 echo ""
 echo -e "${YELLOW}步骤 4/6: 重启服务...${NC}"
-pm2 reload rminte --update-env
+# 使用 restart 而不是 reload，避免端口占用问题 (EADDRINUSE)
+# 因为应用是单实例运行且绑定了特定端口，reload 尝试启动新进程时会冲突
+pm2 restart rminte --update-env
 echo -e "${GREEN}✓ 服务已重启${NC}"
 
 # 5. 检查服务状态
