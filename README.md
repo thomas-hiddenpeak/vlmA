@@ -139,6 +139,173 @@ npm start
 - **自动恢复**：刷新页面后自动恢复上次的配置
 - **恢复初始设置**：提供一键恢复默认配置功能（需确认）
 
+## 生产环境部署
+
+### PM2 部署（推荐）
+
+项目提供了完整的 PM2 部署脚本，适合在生产服务器上运行：
+
+```bash
+# 1. 克隆项目到服务器
+git clone https://github.com/thomas-hiddenpeak/vlmA.git
+cd vlmA
+
+# 2. 运行部署脚本
+chmod +x deploy.sh
+./deploy.sh
+```
+
+部署脚本会自动完成：
+- ✅ 检查 Node.js 环境（需要 18.x 或 20.x LTS）
+- ✅ 安装 PM2 进程管理器
+- ✅ 安装项目依赖
+- ✅ 启动应用并配置自动重启
+- ✅ 配置系统开机自启动
+
+**常用 PM2 命令：**
+
+```bash
+pm2 status              # 查看应用状态
+pm2 logs rminte         # 查看应用日志
+pm2 restart rminte      # 重启应用
+pm2 stop rminte         # 停止应用
+pm2 monit               # 实时监控
+```
+
+**端口配置：**
+- 默认端口：`43003`
+- 修改端口：编辑 `server/server.js` 或设置 `PORT` 环境变量
+
+**防火墙配置：**
+
+```bash
+# 开放应用端口
+sudo ufw allow 43003/tcp
+
+# 如果使用 Nginx 反向代理
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+```
+
+**HTTPS 配置（必需用于摄像头访问）：**
+
+浏览器安全策略要求摄像头访问必须在 HTTPS 环境下（localhost 除外）。项目提供了 Nginx 配置示例：
+
+```bash
+# 查看 HTTP 配置示例
+cat nginx-http.conf.example
+
+# 查看 HTTPS 配置示例（推荐）
+cat nginx-https.conf.example
+```
+
+使用 Let's Encrypt 配置免费 SSL 证书：
+
+```bash
+# 安装 Certbot
+sudo apt install certbot python3-certbot-nginx
+
+# 自动配置 SSL（将 your-domain.com 替换为你的域名）
+sudo certbot --nginx -d your-domain.com
+```
+
+### 自动更新部署
+
+#### 手动更新
+
+服务器上手动更新到最新版本：
+
+```bash
+cd /path/to/vlmA
+./update.sh
+```
+
+更新脚本会自动：
+- 从 GitHub 拉取最新代码
+- 检测并更新依赖（如果 package.json 有变化）
+- 重启 PM2 服务
+- 显示版本变更日志
+
+#### 自动更新（GitHub Webhook）
+
+⚠️ **安全警告**：Webhook 自动部署涉及服务器安全，建议 **Fork 本项目后在自己的仓库中配置**。
+
+**为什么要 Fork？**
+- 🔒 避免未授权的代码推送自动部署到你的服务器
+- 🔐 你可以完全控制代码审查和发布流程
+- 🛡️ 使用自己的 Webhook Secret 保护部署端点
+
+**配置步骤：**
+
+1. **Fork 本项目到你的 GitHub 账号**
+
+2. **在服务器上配置 Webhook 服务**
+
+   ```bash
+   # 生成安全密钥
+   openssl rand -hex 32
+   
+   # 编辑配置文件
+   nano ecosystem.webhook.config.json
+   # 将生成的密钥填入 WEBHOOK_SECRET
+   
+   # 启动 Webhook 服务
+   pm2 start ecosystem.webhook.config.json
+   pm2 save
+   
+   # 开放 Webhook 端口（默认 43004）
+   sudo ufw allow 43004/tcp
+   ```
+
+3. **配置 GitHub Webhook**（在你 Fork 的仓库中）
+
+   - 进入仓库 Settings → Webhooks → Add webhook
+   - Payload URL: `http://你的服务器IP:43004/webhook`
+   - Content type: `application/json`
+   - Secret: 填入你生成的密钥
+   - 选择 "Just the push event"
+   - 点击 "Add webhook"
+
+4. **测试自动部署**
+
+   ```bash
+   # 在你的 Fork 仓库中推送测试提交
+   git commit -m "test: 测试自动部署"
+   git push origin main
+   
+   # 在服务器上查看日志
+   pm2 logs rminte-webhook
+   ```
+
+**详细文档：** 完整的 Webhook 配置说明请参考 [WEBHOOK_SETUP.md](WEBHOOK_SETUP.md)
+
+**安全建议：**
+- ✅ 务必设置 `WEBHOOK_SECRET` 验证请求来源
+- ✅ 使用防火墙限制 Webhook 端口访问
+- ✅ 考虑使用 Nginx 反向代理并配置 SSL
+- ✅ 定期检查部署日志，监控异常活动
+- ✅ 只在你信任和控制的仓库中配置 Webhook
+
+### Docker 部署（可选）
+
+如果你更熟悉 Docker，也可以使用容器化部署：
+
+```bash
+# 构建镜像
+docker build -t rminte .
+
+# 运行容器
+docker run -d \
+  --name rminte \
+  -p 43003:43003 \
+  -e MODEL_URL="https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions" \
+  -e MODEL_NAME="qwen-vl-plus" \
+  --restart unless-stopped \
+  rminte
+```
+
+**注意：** Docker 部署需要自行创建 `Dockerfile`，项目暂未提供。
+
 ## 技术架构
 
 ### 前端技术栈
