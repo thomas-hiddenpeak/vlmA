@@ -17,6 +17,11 @@
       padding: 0;
       box-sizing: border-box;
     }
+
+    html {
+      background-color: #667eea; /* 防止顶部下拉露白 */
+      overscroll-behavior-y: none; /* 禁用浏览器默认的回弹效果 */
+    }
     
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
@@ -24,6 +29,7 @@
       min-height: 100vh;
       padding: 20px;
       -webkit-text-size-adjust: 100%;
+      overscroll-behavior-y: none;
     }
     
     .container {
@@ -1017,16 +1023,16 @@
                 <div style="display: grid; gap: 8px;">
                   <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center;">
                     <label style="font-size: 0.85rem; color: #666;">API 地址</label>
-                    <input id="apiUrlInput" type="text" value="https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem;" />
+                    <input id="apiUrlInput" type="text" value="https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-width: 0;" />
                   </div>
                   <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center;">
                     <label style="font-size: 0.85rem; color: #666;">模型名称</label>
-                    <input id="modelNameInput" type="text" value="qwen-vl-plus" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem;" />
+                    <input id="modelNameInput" type="text" value="qwen-vl-plus" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-width: 0;" />
                   </div>
                   <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center;">
                     <label style="font-size: 0.85rem; color: #666;">API Key</label>
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                      <input id="apiKeyInput" type="password" placeholder="留空表示无需认证(本地模型)" style="flex: 1; padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem;" />
+                    <div style="display: flex; gap: 8px; align-items: center; min-width: 0;">
+                      <input id="apiKeyInput" type="password" placeholder="留空表示无需认证(本地模型)" style="flex: 1; padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-width: 0;" />
                       <a href="https://bailian.console.aliyun.com/?tab=model#/api-key" target="_blank" style="padding: 6px 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 6px; font-size: 0.75rem; white-space: nowrap; transition: all 0.3s; display: inline-flex; align-items: center; gap: 4px;" title="获取阿里云百炼 API Key">
                         🔑 获取 Key
                       </a>
@@ -1037,8 +1043,8 @@
                   </div>
                   <div style="display: grid; grid-template-columns: 100px 1fr 1fr; gap: 8px; align-items: center;">
                     <label style="font-size: 0.85rem; color: #666;">单价(元/千)</label>
-                    <input id="analysisPriceInput" type="number" step="0.001" placeholder="输入" value="0.003" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem;" title="输入 tokens 千tokens单价" />
-                    <input id="analysisPriceOutput" type="number" step="0.001" placeholder="输出" value="0.003" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem;" title="输出 tokens 千tokens单价" />
+                    <input id="analysisPriceInput" type="number" step="0.001" placeholder="输入" value="0.003" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-width: 0;" title="输入 tokens 千tokens单价" />
+                    <input id="analysisPriceOutput" type="number" step="0.001" placeholder="输出" value="0.003" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-width: 0;" title="输出 tokens 千tokens单价" />
                   </div>
                 </div>
               </div>
@@ -1049,16 +1055,16 @@
                 <div style="display: grid; gap: 8px;">
                   <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center;">
                     <label style="font-size: 0.85rem; color: #666;">API 地址</label>
-                    <input id="insightApiUrlInput" type="text" value="https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem;" />
+                    <input id="insightApiUrlInput" type="text" value="https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-width: 0;" />
                   </div>
                   <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center;">
                     <label style="font-size: 0.85rem; color: #666;">模型名称</label>
-                    <input id="insightModelInput" type="text" value="qwen-max" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem;" />
+                    <input id="insightModelInput" type="text" value="qwen-max" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-width: 0;" />
                   </div>
                   <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center;">
                     <label style="font-size: 0.85rem; color: #666;">API Key</label>
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                      <input id="insightApiKeyInput" type="password" placeholder="留空表示无需认证(本地模型)" style="flex: 1; padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem;" />
+                    <div style="display: flex; gap: 8px; align-items: center; min-width: 0;">
+                      <input id="insightApiKeyInput" type="password" placeholder="留空表示无需认证(本地模型)" style="flex: 1; padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-width: 0;" />
                       <a href="https://bailian.console.aliyun.com/?tab=model#/api-key" target="_blank" style="padding: 6px 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 6px; font-size: 0.75rem; white-space: nowrap; transition: all 0.3s; display: inline-flex; align-items: center; gap: 4px;" title="获取阿里云百炼 API Key">
                         🔑 获取 Key
                       </a>
@@ -1069,8 +1075,8 @@
                   </div>
                   <div style="display: grid; grid-template-columns: 100px 1fr 1fr; gap: 8px; align-items: center;">
                     <label style="font-size: 0.85rem; color: #666;">单价(元/千)</label>
-                    <input id="insightPriceInput" type="number" step="0.001" placeholder="输入" value="0.002" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem;" title="输入 tokens 千tokens单价" />
-                    <input id="insightPriceOutput" type="number" step="0.001" placeholder="输出" value="0.002" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem;" title="输出 tokens 千tokens单价" />
+                    <input id="insightPriceInput" type="number" step="0.001" placeholder="输入" value="0.002" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-width: 0;" title="输入 tokens 千tokens单价" />
+                    <input id="insightPriceOutput" type="number" step="0.001" placeholder="输出" value="0.002" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-width: 0;" title="输出 tokens 千tokens单价" />
                   </div>
                 </div>
               </div>
@@ -1091,7 +1097,7 @@
                 <div style="display: grid; gap: 8px;">
                   <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center;">
                     <label style="font-size: 0.85rem; color: #666;">提示词</label>
-                    <textarea id="analysisPromptInput" placeholder="请描述这些时序图片中的内容,不要逐个描述，请整体简要描述。" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-height: 80px; resize: vertical;">请描述这些时序图片中的内容,不要逐个描述，请整体简要描述。</textarea>
+                    <textarea id="analysisPromptInput" placeholder="请描述这些时序图片中的内容,不要逐个描述，请整体简要描述。" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-height: 80px; resize: vertical; min-width: 0;">请描述这些时序图片中的内容,不要逐个描述，请整体简要描述。</textarea>
                   </div>
                   <div style="font-size: 0.75rem; color: #999; padding: 8px; background: white; border-radius: 6px;">
                     ℹ️ 此提示词用于指导模型如何分析视频帧内容。
@@ -1105,7 +1111,7 @@
                 <div style="display: grid; gap: 8px;">
                   <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center;">
                     <label style="font-size: 0.85rem; color: #666;">提示词</label>
-                    <textarea id="insightPromptInput" placeholder="你是一个专业的信息综合分析专家。你的任务是对已有的信息进行二次总结和提炼，压缩关键信息，识别重要模式。" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-height: 80px; resize: vertical;">你是一个专业的信息综合分析专家。你的任务是对已有的信息进行二次总结和提炼，压缩关键信息，识别重要模式。你要处理的信息里面有些信息（可能是本次信息也可能是上一分钟的洞察）可能前后不相关，需要区别整理。</textarea>
+                    <textarea id="insightPromptInput" placeholder="你是一个专业的信息综合分析专家。你的任务是对已有的信息进行二次总结和提炼，压缩关键信息，识别重要模式。" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-height: 80px; resize: vertical; min-width: 0;">你是一个专业的信息综合分析专家。你的任务是对已有的信息进行二次总结和提炼，压缩关键信息，识别重要模式。你要处理的信息里面有些信息（可能是本次信息也可能是上一分钟的洞察）可能前后不相关，需要区别整理。</textarea>
                   </div>
                   <div style="font-size: 0.75rem; color: #999; padding: 8px; background: white; border-radius: 6px;">
                     ℹ️ 此提示词用于指导模型如何进行多层级洞察分析。
@@ -1119,7 +1125,7 @@
                 <div style="display: grid; gap: 8px;">
                   <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center;">
                     <label style="font-size: 0.85rem; color: #666;">汇总提示词</label>
-                    <textarea id="summaryPromptInput" placeholder="请分析以下所有历史观察记录，提供综合洞察和总结：" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-height: 80px; resize: vertical;">请分析以下所有历史观察记录，提供综合洞察和总结：</textarea>
+                    <textarea id="summaryPromptInput" placeholder="请分析以下所有历史观察记录，提供综合洞察和总结：" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-height: 80px; resize: vertical; min-width: 0;">请分析以下所有历史观察记录，提供综合洞察和总结：</textarea>
                   </div>
                   <div style="font-size: 0.75rem; color: #999; padding: 8px; background: white; border-radius: 6px;">
                     ℹ️ 当点击"停止并汇总"按钮时，系统会使用此提示词对所有采集的历史分析进行综合分析。
@@ -1133,7 +1139,7 @@
                 <div style="display: grid; gap: 8px;">
                   <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: start;">
                     <label style="font-size: 0.85rem; color: #666; padding-top: 8px;">提示词</label>
-                    <textarea id="taskPromptInput" placeholder="分析内容并提取待办任务..." style="padding: 8px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-height: 120px; resize: vertical;">你是一个任务提取助手。请分析以下内容，识别其中需要采取行动的事项，并提取为待办任务。
+                    <textarea id="taskPromptInput" placeholder="分析内容并提取待办任务..." style="padding: 8px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-height: 120px; resize: vertical; min-width: 0;">你是一个任务提取助手。请分析以下内容，识别其中需要采取行动的事项，并提取为待办任务。
 
 要求：
 1. 只提取明确需要行动的事项
@@ -1179,11 +1185,11 @@
                 <div style="display: grid; gap: 8px;">
                   <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center;">
                     <label style="font-size: 0.85rem; color: #666;">分析间隔</label>
-                    <input id="intervalInput" type="number" min="1" max="60" value="12" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem;" placeholder="秒" />
+                    <input id="intervalInput" type="number" min="1" max="60" value="12" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-width: 0;" placeholder="秒" />
                   </div>
                   <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center;">
                     <label style="font-size: 0.85rem; color: #666;">采集帧数</label>
-                    <input id="fpsInput" type="number" min="1" max="100" value="4" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem;" />
+                    <input id="fpsInput" type="number" min="1" max="100" value="4" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-width: 0;" />
                   </div>
                 </div>
               </div>
@@ -1194,19 +1200,19 @@
                 <div style="display: grid; gap: 8px;">
                   <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center;">
                     <label style="font-size: 0.85rem; color: #666;">60秒区间</label>
-                    <input id="insightIntervalInput" type="number" min="1" max="20" value="5" placeholder="条分析历史" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem;" />
+                    <input id="insightIntervalInput" type="number" min="1" max="20" value="5" placeholder="条分析历史" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-width: 0;" />
                   </div>
                   <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center;">
                     <label style="font-size: 0.85rem; color: #666;">15分钟区间</label>
-                    <input id="fifteenIntervalInput" type="number" min="1" max="30" value="15" placeholder="条60秒洞察" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem;" />
+                    <input id="fifteenIntervalInput" type="number" min="1" max="30" value="15" placeholder="条60秒洞察" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-width: 0;" />
                   </div>
                   <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center;">
                     <label style="font-size: 0.85rem; color: #666;">1小时区间</label>
-                    <input id="hourIntervalInput" type="number" min="1" max="10" value="4" placeholder="条15分钟洞察" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem;" />
+                    <input id="hourIntervalInput" type="number" min="1" max="10" value="4" placeholder="条15分钟洞察" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-width: 0;" />
                   </div>
                   <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center;">
                     <label style="font-size: 0.85rem; color: #666;">每日区间</label>
-                    <input id="dayIntervalInput" type="number" min="1" max="30" value="24" placeholder="条1小时洞察" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem;" />
+                    <input id="dayIntervalInput" type="number" min="1" max="30" value="24" placeholder="条1小时洞察" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-width: 0;" />
                   </div>
                 </div>
               </div>
