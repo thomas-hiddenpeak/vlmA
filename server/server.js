@@ -156,6 +156,11 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const MODEL_URL = process.env.MODEL_URL || 'http://192.168.0.113:8000/v1/chat/completions';
 const MODEL_NAME = process.env.MODEL_NAME || 'RM-01 LLM';
+const SUMMARY_PROMPT = process.env.SUMMARY_PROMPT || '请分析以下所有历史观察记录，提供综合洞察和总结：';
+
+// 采集状态和历史记录
+let isCollecting = false;
+let analysisHistory = [];
 
 // 静态页面
 app.use('/', express.static(path.join(__dirname, '..', 'public')));
@@ -209,7 +214,10 @@ app.post('/analyze', uploadMiddleware, async (req, res) => {
         }
       ],
       temperature: 0.7,
-      stream: true  // 启用流式输出
+      stream: true,  // 启用流式输出
+      stream_options: {
+        include_usage: true  // vLLM 需要这个选项来在流式响应中包含 usage
+      }
     };
 
     console.log(`[${new Date().toISOString()}] Analyzing ${frames.length} frames with prompt: "${userPrompt}"`);
@@ -220,6 +228,9 @@ app.post('/analyze', uploadMiddleware, async (req, res) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
+    // 收集完整的响应文本用于历史记录
+    let fullResponse = '';
+
     // 发送到 vllm 服务，启用流式响应
     const resp = await axios.post(apiUrl, requestBody, {
       headers: { 'Content-Type': 'application/json' },
@@ -227,12 +238,43 @@ app.post('/analyze', uploadMiddleware, async (req, res) => {
       responseType: 'stream'
     });
 
-    // 将 vllm 的流式响应转发给前端
+    // 将 vllm 的流式响应转发给前端，同时收集完整文本
     resp.data.on('data', (chunk) => {
+      const chunkStr = chunk.toString();
+      
+      // 解析SSE格式的数据块，提取实际文本内容
+      if (isCollecting) {
+        const lines = chunkStr.split('\n');
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const jsonStr = line.slice(6).trim();
+              if (jsonStr === '[DONE]') continue;
+              const parsed = JSON.parse(jsonStr);
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                fullResponse += content;
+              }
+            } catch (e) {
+              // 忽略解析错误
+            }
+          }
+        }
+      }
+      
       res.write(chunk);
     });
 
     resp.data.on('end', () => {
+      // 如果正在采集，保存到历史记录
+      if (isCollecting && fullResponse.trim()) {
+        analysisHistory.push({
+          timestamp: new Date().toISOString(),
+          prompt: userPrompt,
+          response: fullResponse.trim()
+        });
+        console.log(`[${new Date().toISOString()}] Saved analysis to history. Total: ${analysisHistory.length}`);
+      }
       res.end();
     });
 
@@ -248,6 +290,153 @@ app.post('/analyze', uploadMiddleware, async (req, res) => {
     } else {
       res.status(500).json({ error: err.message || 'proxy error' });
     }
+  }
+});
+
+// 开始采集 - 启用历史记录收集
+app.post('/collection/start', (req, res) => {
+  try {
+    if (isCollecting) {
+      return res.json({ status: 'already collecting', historyCount: analysisHistory.length });
+    }
+    
+    isCollecting = true;
+    analysisHistory = []; // 清空历史记录
+    console.log(`[${new Date().toISOString()}] Started collection`);
+    
+    res.json({ 
+      status: 'started',
+      historyCount: 0
+    });
+  } catch (err) {
+    console.error('Collection start error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 停止采集 - 生成汇总分析
+app.post('/collection/stop', async (req, res) => {
+  try {
+    if (!isCollecting) {
+      return res.json({ 
+        status: 'not collecting',
+        historyCount: analysisHistory.length
+      });
+    }
+    
+    isCollecting = false;
+    const historyCount = analysisHistory.length;
+    
+    console.log(`[${new Date().toISOString()}] Stopped collection. Total entries: ${historyCount}`);
+    
+    // 如果没有历史记录，直接返回
+    if (historyCount === 0) {
+      return res.json({
+        status: 'stopped',
+        historyCount: 0,
+        summary: null
+      });
+    }
+    
+    // 获取自定义汇总提示词（如果提供）
+    const summaryPrompt = req.body.summaryPrompt || SUMMARY_PROMPT;
+    const apiUrl = req.body.apiUrl || MODEL_URL;
+    const modelName = req.body.modelName || MODEL_NAME;
+    
+    // 构建历史记录文本
+    let historyText = '';
+    analysisHistory.forEach((entry, index) => {
+      historyText += `\n=== 记录 ${index + 1} (${entry.timestamp}) ===\n`;
+      historyText += `提示词: ${entry.prompt}\n`;
+      historyText += `分析结果: ${entry.response}\n`;
+    });
+    
+    // 构建汇总请求
+    const requestBody = {
+      model: modelName,
+      messages: [
+        {
+          role: 'user',
+          content: `${summaryPrompt}\n\n${historyText}`
+        }
+      ],
+      temperature: 0.7,
+      stream: true
+    };
+    
+    console.log(`[${new Date().toISOString()}] Generating summary for ${historyCount} entries`);
+    
+    // 设置 SSE 响应头
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    
+    // 发送元数据
+    res.write(`data: ${JSON.stringify({ 
+      type: 'metadata', 
+      historyCount, 
+      status: 'stopped' 
+    })}\n\n`);
+    
+    // 发送到 vllm 服务
+    const resp = await axios.post(apiUrl, requestBody, {
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 120000,
+      responseType: 'stream'
+    });
+    
+    // 转发流式响应
+    resp.data.on('data', (chunk) => {
+      res.write(chunk);
+    });
+    
+    resp.data.on('end', () => {
+      res.end();
+    });
+    
+    resp.data.on('error', (err) => {
+      console.error('Summary stream error:', err);
+      res.end();
+    });
+    
+  } catch (err) {
+    console.error('Collection stop error:', err);
+    if (err.response) {
+      res.status(err.response.status).json(err.response.data);
+    } else {
+      res.status(500).json({ error: err.message });
+    }
+  }
+});
+
+// 获取采集状态
+app.get('/collection/status', (req, res) => {
+  res.json({
+    isCollecting,
+    historyCount: analysisHistory.length,
+    summaryPrompt: SUMMARY_PROMPT
+  });
+});
+
+// 更新汇总提示词配置
+app.post('/collection/config', (req, res) => {
+  try {
+    const { summaryPrompt } = req.body;
+    
+    if (summaryPrompt) {
+      // 注意：这里只是临时更新，重启后会恢复默认值
+      // 如果需要持久化，应该保存到配置文件或数据库
+      process.env.SUMMARY_PROMPT = summaryPrompt;
+      console.log(`[${new Date().toISOString()}] Updated summary prompt`);
+    }
+    
+    res.json({
+      status: 'updated',
+      summaryPrompt: process.env.SUMMARY_PROMPT || SUMMARY_PROMPT
+    });
+  } catch (err) {
+    console.error('Config update error:', err);
+    res.status(500).json({ error: err.message });
   }
 });
 

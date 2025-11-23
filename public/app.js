@@ -9,10 +9,16 @@ const statusSpan = document.getElementById('status');
 const intervalInput = document.getElementById('intervalInput');
 const fpsInput = document.getElementById('fpsInput');
 const historyDiv = document.getElementById('history');
-const promptSelect = document.getElementById('promptSelect');
-const customPrompt = document.getElementById('customPrompt');
 const apiUrlInput = document.getElementById('apiUrlInput');
 const modelNameInput = document.getElementById('modelNameInput');
+
+// 采集控制相关元素
+const summaryCard = document.getElementById('summaryCard');
+const summaryResult = document.getElementById('summaryResult');
+const summaryHistoryCount = document.getElementById('summaryHistoryCount');
+const summaryTimestamp = document.getElementById('summaryTimestamp');
+const summaryPromptInput = document.getElementById('summaryPromptInput');
+const saveSummaryPromptBtn = document.getElementById('saveSummaryPromptBtn');
 
 // 洞察相关元素
 const insightIntervalInput = document.getElementById('insightIntervalInput');
@@ -21,8 +27,6 @@ const hourIntervalInput = document.getElementById('hourIntervalInput');
 const dayIntervalInput = document.getElementById('dayIntervalInput');
 const insightApiUrlInput = document.getElementById('insightApiUrlInput');
 const insightModelInput = document.getElementById('insightModelInput');
-const insightSystemPromptSelect = document.getElementById('insightSystemPromptSelect');
-const customInsightSystemPrompt = document.getElementById('customInsightSystemPrompt');
 
 // 多层级洞察显示元素
 const minuteInsightHistory = document.getElementById('minuteInsightHistory');
@@ -48,6 +52,7 @@ let analysisHistory = []; // 存储分析历史的完整文本
 let latestFrame = null; // 最新的帧数据
 let isStreamActive = false; // 视频流是否活跃
 let isAnalyzing = false; // 是否正在分析
+let isCollecting = false; // 是否正在采集历史记录
 
 // 多层级洞察存储
 let insightLevels = {
@@ -63,6 +68,196 @@ let insightCounts = {
   hour: 0,
   day: 0
 };
+
+// Tokens 统计
+let tokenStats = {
+  analysis: {
+    input: 0,
+    output: 0,
+    total: 0
+  },
+  insight: {
+    input: 0,
+    output: 0,
+    total: 0
+  }
+};
+
+// 工作时长统计
+let workDuration = {
+  startTime: null,      // 开始工作的时间戳
+  totalSeconds: 0,      // 累计工作秒数
+  timerInterval: null   // 定时器
+};
+
+// 从 localStorage 加载 token 统计
+function loadTokenStats() {
+  try {
+    const saved = localStorage.getItem('vlmA_token_stats');
+    if (saved) {
+      tokenStats = JSON.parse(saved);
+      updateTokenStatsDisplay();
+    }
+    
+    // 加载工作时长
+    const savedDuration = localStorage.getItem('vlmA_work_duration');
+    if (savedDuration) {
+      workDuration.totalSeconds = parseInt(savedDuration) || 0;
+      updateWorkDurationDisplay();
+    }
+  } catch (err) {
+    console.error('加载 token 统计失败:', err);
+  }
+}
+
+// 保存 token 统计到 localStorage
+function saveTokenStats() {
+  try {
+    localStorage.setItem('vlmA_token_stats', JSON.stringify(tokenStats));
+    localStorage.setItem('vlmA_work_duration', workDuration.totalSeconds.toString());
+  } catch (err) {
+    console.error('保存 token 统计失败:', err);
+  }
+}
+
+// 更新分析模型的 token 统计
+function updateAnalysisTokens(inputTokens, outputTokens) {
+  tokenStats.analysis.input += inputTokens || 0;
+  tokenStats.analysis.output += outputTokens || 0;
+  tokenStats.analysis.total = tokenStats.analysis.input + tokenStats.analysis.output;
+  updateTokenStatsDisplay();
+  saveTokenStats();
+}
+
+// 更新洞察模型的 token 统计
+function updateInsightTokens(inputTokens, outputTokens) {
+  tokenStats.insight.input += inputTokens || 0;
+  tokenStats.insight.output += outputTokens || 0;
+  tokenStats.insight.total = tokenStats.insight.input + tokenStats.insight.output;
+  updateTokenStatsDisplay();
+  saveTokenStats();
+}
+
+// 更新显示
+function updateTokenStatsDisplay() {
+  document.getElementById('analysisInputTokens').textContent = tokenStats.analysis.input.toLocaleString();
+  document.getElementById('analysisOutputTokens').textContent = tokenStats.analysis.output.toLocaleString();
+  document.getElementById('analysisTotalTokens').textContent = tokenStats.analysis.total.toLocaleString();
+  
+  document.getElementById('insightInputTokens').textContent = tokenStats.insight.input.toLocaleString();
+  document.getElementById('insightOutputTokens').textContent = tokenStats.insight.output.toLocaleString();
+  document.getElementById('insightTotalTokens').textContent = tokenStats.insight.total.toLocaleString();
+  
+  // 计算费用
+  updateCostDisplay();
+}
+
+// 计算并更新费用显示
+function updateCostDisplay() {
+  const analysisPriceInput = parseFloat(document.getElementById('analysisPriceInput')?.value || 0.003);
+  const analysisPriceOutput = parseFloat(document.getElementById('analysisPriceOutput')?.value || 0.003);
+  const insightPriceInput = parseFloat(document.getElementById('insightPriceInput')?.value || 0.002);
+  const insightPriceOutput = parseFloat(document.getElementById('insightPriceOutput')?.value || 0.002);
+  
+  // 计算分析模型费用（元）= (输入tokens / 1000) * 输入单价 + (输出tokens / 1000) * 输出单价
+  const analysisCost = (tokenStats.analysis.input / 1000) * analysisPriceInput + 
+                       (tokenStats.analysis.output / 1000) * analysisPriceOutput;
+  
+  // 计算洞察模型费用
+  const insightCost = (tokenStats.insight.input / 1000) * insightPriceInput + 
+                      (tokenStats.insight.output / 1000) * insightPriceOutput;
+  
+  // 总费用
+  const totalCost = analysisCost + insightCost;
+  
+  // 更新显示（保留4位小数）
+  document.getElementById('analysisCost').textContent = analysisCost.toFixed(4);
+  document.getElementById('insightCost').textContent = insightCost.toFixed(4);
+  document.getElementById('totalCost').textContent = totalCost.toFixed(4);
+  
+  // 计算预计成本
+  updateEstimatedCosts(totalCost);
+}
+
+// 计算并更新预计成本
+function updateEstimatedCosts(totalCost) {
+  const workSeconds = workDuration.totalSeconds;
+  
+  if (workSeconds > 0) {
+    // 计算每秒平均成本
+    const costPerSecond = totalCost / workSeconds;
+    
+    // 预计1小时成本（3600秒）
+    const hourlyEstimate = costPerSecond * 3600;
+    
+    // 预计24小时成本（86400秒）
+    const dailyEstimate = costPerSecond * 86400;
+    
+    document.getElementById('hourlyEstimate').textContent = hourlyEstimate.toFixed(4);
+    document.getElementById('dailyEstimate').textContent = dailyEstimate.toFixed(4);
+  } else {
+    document.getElementById('hourlyEstimate').textContent = '0.00';
+    document.getElementById('dailyEstimate').textContent = '0.00';
+  }
+}
+
+// 开始工作时长计时
+function startWorkDuration() {
+  if (workDuration.timerInterval) return; // 已经在运行
+  
+  workDuration.startTime = Date.now();
+  
+  // 每秒更新一次
+  workDuration.timerInterval = setInterval(() => {
+    workDuration.totalSeconds++;
+    updateWorkDurationDisplay();
+    saveTokenStats(); // 每秒保存一次时长
+  }, 1000);
+}
+
+// 停止工作时长计时
+function stopWorkDuration() {
+  if (workDuration.timerInterval) {
+    clearInterval(workDuration.timerInterval);
+    workDuration.timerInterval = null;
+    workDuration.startTime = null;
+  }
+}
+
+// 更新工作时长显示
+function updateWorkDurationDisplay() {
+  const hours = Math.floor(workDuration.totalSeconds / 3600);
+  const minutes = Math.floor((workDuration.totalSeconds % 3600) / 60);
+  const seconds = workDuration.totalSeconds % 60;
+  
+  const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  document.getElementById('workDuration').textContent = timeStr;
+  
+  // 同时更新预计成本
+  updateCostDisplay();
+}
+
+// 清空统计
+function clearTokenStats() {
+  if (confirm('确定要清空所有 Token 统计数据吗？')) {
+    tokenStats = {
+      analysis: { input: 0, output: 0, total: 0 },
+      insight: { input: 0, output: 0, total: 0 }
+    };
+    
+    // 重置工作时长
+    stopWorkDuration();
+    workDuration.totalSeconds = 0;
+    workDuration.startTime = null;
+    localStorage.removeItem('vlmA_work_duration');
+    
+    updateTokenStatsDisplay();
+    updateWorkDurationDisplay();
+    saveTokenStats();
+    showSaveNotification('✅ Token 统计已清空');
+  }
+}
+
 
 const PROMPT_TEMPLATES = {
   'describe': '请描述这些时序图片中的内容,不要逐个描述，请整体简要描述。',
@@ -219,10 +414,13 @@ async function startAnalysis() {
   }
   
   try {
+    // 开始采集
+    await startCollection();
+    
     const analyzeInterval = parseInt(intervalInput.value) || 12; // 分析间隔（秒）
     const totalFrames = parseInt(fpsInput.value) || 4; // 总帧数
     
-    toggleAnalysisBtn.textContent = '⏹️ 停止分析';
+    toggleAnalysisBtn.textContent = '⏹️ 停止分析并汇总';
     toggleAnalysisBtn.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
     intervalInput.disabled = true;
     fpsInput.disabled = true;
@@ -231,6 +429,9 @@ async function startAnalysis() {
     isAnalyzing = true;
     const statusContainer = document.getElementById('statusContainer');
     statusContainer.classList.add('active');
+    
+    // 启动工作时长计时
+    startWorkDuration();
     
     frameBuffer = []; // 清空缓存
     
@@ -257,6 +458,9 @@ async function startAnalysis() {
           timestamp: new Date()
         });
         statusSpan.textContent = `已缓存 ${frameBuffer.length}/${totalFrames} 帧`;
+        
+        // 更新缩略图显示
+        updateFrameBufferPreview();
       }
     }, captureIntervalMs);
     
@@ -279,7 +483,7 @@ async function startAnalysis() {
 }
 
 // 停止分析
-function stopAnalysis() {
+async function stopAnalysis() {
   console.log('stopAnalysis called, isAnalyzing:', isAnalyzing);
   
   if (captureIntervalId) clearInterval(captureIntervalId);
@@ -292,12 +496,20 @@ function stopAnalysis() {
   
   isAnalyzing = false;
   
+  // 停止工作时长计时
+  stopWorkDuration();
+  
+  // 停止采集并生成汇总
+  if (isCollecting) {
+    await stopCollectionAndSummarize();
+  }
+  
   // 停止视频流
   stopVideoStream();
   
   // 确保按钮元素存在
   if (toggleAnalysisBtn) {
-    toggleAnalysisBtn.textContent = '▶️ 开始分析';
+    toggleAnalysisBtn.textContent = '▶️ 开始分析与采集';
     toggleAnalysisBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
     console.log('Button updated to:', toggleAnalysisBtn.textContent);
   } else {
@@ -310,6 +522,59 @@ function stopAnalysis() {
   const statusContainer = document.getElementById('statusContainer');
   statusContainer.classList.remove('active', 'error');
   statusSpan.textContent = '已停止';
+  
+  // 隐藏缓存帧预览
+  updateFrameBufferPreview();
+}
+
+// 更新缓存帧缩略图显示
+function updateFrameBufferPreview() {
+  const previewContainer = document.getElementById('frameBufferPreview');
+  const thumbnailsContainer = document.getElementById('frameBufferThumbnails');
+  const countSpan = document.getElementById('frameBufferCount');
+  
+  if (!previewContainer || !thumbnailsContainer || !countSpan) return;
+  
+  // 更新计数
+  countSpan.textContent = frameBuffer.length;
+  
+  // 如果没有缓存帧，隐藏容器
+  if (frameBuffer.length === 0) {
+    previewContainer.style.display = 'none';
+    thumbnailsContainer.innerHTML = '';
+    return;
+  }
+  
+  // 显示容器
+  previewContainer.style.display = 'block';
+  
+  // 清空并重新生成缩略图
+  thumbnailsContainer.innerHTML = '';
+  
+  frameBuffer.forEach((frame, index) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.style.cssText = 'width: 80px; height: 60px; object-fit: cover; border-radius: 6px; border: 2px solid #e1e4e8; flex-shrink: 0; cursor: pointer; transition: all 0.2s;';
+      img.title = `帧 ${index + 1} - ${frame.timestamp.toLocaleTimeString('zh-CN')}`;
+      
+      // 悬停效果
+      img.addEventListener('mouseenter', () => {
+        img.style.transform = 'scale(1.1)';
+        img.style.borderColor = '#667eea';
+        img.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.3)';
+      });
+      img.addEventListener('mouseleave', () => {
+        img.style.transform = 'scale(1)';
+        img.style.borderColor = '#e1e4e8';
+        img.style.boxShadow = 'none';
+      });
+      
+      thumbnailsContainer.appendChild(img);
+    };
+    reader.readAsDataURL(frame.blob);
+  });
 }
 
 async function sendFramesForAnalysis() {
@@ -317,6 +582,9 @@ async function sendFramesForAnalysis() {
   
   const framesWithTimestamps = [...frameBuffer]; // 复制当前缓存（包含时间戳）
   frameBuffer = []; // 清空缓存，准备下一轮采集
+  
+  // 更新缩略图显示（清空）
+  updateFrameBufferPreview();
   
   // 提取第一帧和最后一帧的时间戳
   const firstFrameTime = framesWithTimestamps[0].timestamp.toLocaleString('zh-CN');
@@ -334,10 +602,8 @@ async function sendFramesForAnalysis() {
     });
     
     // 添加prompt参数
-    const promptType = promptSelect.value;
-    const promptText = promptType === 'custom' 
-      ? (customPrompt.value || PROMPT_TEMPLATES['describe'])
-      : PROMPT_TEMPLATES[promptType];
+    const analysisPromptInput = document.getElementById('analysisPromptInput');
+    const promptText = analysisPromptInput ? analysisPromptInput.value.trim() : '请描述这些时序图片中的内容,不要逐个描述，请整体简要描述。';
     form.append('prompt', promptText);
     
     // 添加 API URL 和模型名称
@@ -400,6 +666,7 @@ async function sendFramesForAnalysis() {
     
     const reader = resp.body.getReader();
     const decoder = new TextDecoder();
+    let usageData = null;
     
     while (true) {
       const { done, value } = await reader.read();
@@ -415,19 +682,60 @@ async function sendFramesForAnalysis() {
           
           try {
             const json = JSON.parse(data);
-            if (json.choices && json.choices[0] && json.choices[0].delta) {
-              const content = json.choices[0].delta.content || '';
-              if (content) {
-                fullText += content;
-                // 实时渲染 Markdown
+            
+            // 打印完整的响应对象（仅在有 finish_reason 时）
+            if (json.choices && json.choices[0] && json.choices[0].finish_reason) {
+              console.log('📦 分析模型完成消息:', json);
+            }
+            
+            // 提取 token 使用信息（可能在任何数据包中）
+            if (json.usage) {
+              usageData = json.usage;
+              console.log('✅ 找到分析模型真实 usage 数据:', json.usage);
+            }
+            
+            // 处理内容
+            if (json.choices && json.choices[0]) {
+              const choice = json.choices[0];
+              
+              // 检查 delta 中的内容（流式）
+              if (choice.delta && choice.delta.content) {
+                fullText += choice.delta.content;
                 contentDiv.innerHTML = marked.parse(fullText);
+              }
+              
+              // 检查 message 中的内容（某些实现）
+              if (choice.message && choice.message.content) {
+                fullText += choice.message.content;
+                contentDiv.innerHTML = marked.parse(fullText);
+              }
+              
+              // 检查 finish_reason，可能伴随 usage
+              if (choice.finish_reason && json.usage) {
+                usageData = json.usage;
               }
             }
           } catch (e) {
             // 忽略解析错误
+            console.debug('JSON 解析失败:', line);
           }
         }
       }
+    }
+    
+    // 更新分析模型的 token 统计
+    if (usageData) {
+      updateAnalysisTokens(
+        usageData.prompt_tokens || 0,
+        usageData.completion_tokens || 0
+      );
+    } else {
+      // 如果没有 usage 数据，使用估算值
+      // 粗略估算：中文约 1.5 字符/token，英文约 4 字符/token
+      const estimatedOutputTokens = Math.ceil(fullText.length / 2);
+      // 输入 token 难以估算，假设图片编码约 1000 tokens/图
+      const estimatedInputTokens = framesWithTimestamps.length * 1000;
+      updateAnalysisTokens(estimatedInputTokens, estimatedOutputTokens);
     }
     
     // 保存分析历史到数组
@@ -463,6 +771,164 @@ toggleAnalysisBtn.addEventListener('click', () => {
   }
 });
 
+// 开始采集函数
+async function startCollection() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/collection/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok) {
+      isCollecting = true;
+      summaryCard.style.display = 'none';
+      
+      // 添加状态指示
+      const indicator = document.createElement('div');
+      indicator.id = 'collectionIndicator';
+      indicator.style.cssText = 'position: fixed; top: 20px; right: 20px; padding: 12px 20px; background: linear-gradient(135deg, #20bf6b 0%, #26de81 100%); color: white; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 12px rgba(32, 191, 107, 0.4); z-index: 1000; animation: pulse 2s infinite;';
+      indicator.innerHTML = '🔴 正在采集历史记录...';
+      document.body.appendChild(indicator);
+      
+      console.log('Collection started:', data);
+    } else {
+      console.error('开始采集失败:', data.error);
+    }
+  } catch (err) {
+    console.error('Start collection error:', err);
+  }
+}
+
+// 停止采集并生成汇总函数
+async function stopCollectionAndSummarize() {
+  try {
+    // 移除采集指示器
+    const indicator = document.getElementById('collectionIndicator');
+    if (indicator) {
+      indicator.remove();
+    }
+    
+    // 显示生成中状态
+    if (toggleAnalysisBtn) {
+      toggleAnalysisBtn.disabled = true;
+      toggleAnalysisBtn.textContent = '⏳ 生成汇总中...';
+    }
+    
+    const summaryPrompt = summaryPromptInput.value.trim() || '请分析以下所有历史观察记录，提供综合洞察和总结：';
+    const insightApiUrl = insightApiUrlInput.value.trim();
+    const insightModel = insightModelInput.value.trim();
+    
+    const response = await fetch(`${API_BASE_URL}/collection/stop`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        summaryPrompt,
+        apiUrl: insightApiUrl,
+        modelName: insightModel
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error('请求失败');
+    }
+    
+    // 解析 SSE 流
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let summaryText = '';
+    let historyCount = 0;
+    
+    summaryCard.style.display = 'block';
+    summaryResult.textContent = '正在生成汇总分析...';
+    
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+      
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const jsonStr = line.slice(6).trim();
+            if (jsonStr === '[DONE]') continue;
+            
+            const parsed = JSON.parse(jsonStr);
+            
+            // 元数据
+            if (parsed.type === 'metadata') {
+              historyCount = parsed.historyCount;
+              summaryHistoryCount.textContent = historyCount;
+              summaryTimestamp.textContent = new Date().toLocaleString('zh-CN');
+              continue;
+            }
+            
+            // 流式内容
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              summaryText += content;
+              summaryResult.textContent = summaryText;
+              // 自动滚动到底部
+              summaryResult.scrollTop = summaryResult.scrollHeight;
+            }
+          } catch (e) {
+            console.error('Parse error:', e);
+          }
+        }
+      }
+    }
+    
+    isCollecting = false;
+    
+    if (toggleAnalysisBtn) {
+      toggleAnalysisBtn.disabled = false;
+    }
+    
+    console.log('Summary completed. History count:', historyCount);
+    
+  } catch (err) {
+    console.error('Stop collection error:', err);
+    alert('生成汇总失败: ' + err.message);
+    
+    if (toggleAnalysisBtn) {
+      toggleAnalysisBtn.disabled = false;
+    }
+  }
+}
+
+// 保存汇总提示词（已废弃，现在通过配置模态框保存）
+saveSummaryPromptBtn?.addEventListener('click', async () => {
+  try {
+    const summaryPrompt = summaryPromptInput.value.trim();
+    
+    if (!summaryPrompt) {
+      alert('请输入汇总提示词');
+      return;
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/collection/config`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ summaryPrompt })
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok) {
+      alert('汇总提示词已保存');
+      console.log('Summary prompt updated:', data);
+    } else {
+      alert('保存失败: ' + (data.error || '未知错误'));
+    }
+  } catch (err) {
+    console.error('Save summary prompt error:', err);
+    alert('保存失败: ' + err.message);
+  }
+});
+
 // 刷新设备列表按钮
 refreshDevicesBtn.addEventListener('click', () => {
   refreshDevicesBtn.textContent = '⏳';
@@ -472,11 +938,6 @@ refreshDevicesBtn.addEventListener('click', () => {
     refreshDevicesBtn.textContent = '🔄';
     refreshDevicesBtn.disabled = false;
   }, 1000);
-});
-
-// 页面加载时获取设备列表
-window.addEventListener('DOMContentLoaded', () => {
-  requestDeviceList();
 });
 
 // 如果页面被关闭，停止视频流
@@ -505,14 +966,16 @@ function closeImageModal() {
   modal.classList.remove('active');
 }
 
-// 点击模态框背景关闭
-document.addEventListener('DOMContentLoaded', () => {
+// 点击模态框背景关闭（在主 DOMContentLoaded 中初始化）
+function initImageModal() {
   const modal = document.getElementById('imageModal');
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      closeImageModal();
-    }
-  });
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeImageModal();
+      }
+    });
+  }
   
   // ESC键关闭
   document.addEventListener('keydown', (e) => {
@@ -520,7 +983,7 @@ document.addEventListener('DOMContentLoaded', () => {
       closeImageModal();
     }
   });
-});
+}
 
 // 检查并自动生成洞察
 function checkAndGenerateInsight() {
@@ -679,10 +1142,8 @@ async function generateDayInsight() {
 
 // 获取系统提示词
 function getSystemPrompt() {
-  const systemPromptType = insightSystemPromptSelect.value;
-  return systemPromptType === 'custom' 
-    ? (customInsightSystemPrompt.value || INSIGHT_SYSTEM_PROMPTS['summary'])
-    : INSIGHT_SYSTEM_PROMPTS[systemPromptType];
+  const insightPromptInput = document.getElementById('insightPromptInput');
+  return insightPromptInput ? insightPromptInput.value.trim() : '你是一个专业的信息综合分析专家。你的任务是对已有的信息进行二次总结和提炼，压缩关键信息，识别重要模式。你要处理的信息里面有些信息（可能是本次信息也可能是上一分钟的洞察）可能前后不相关，需要区别整理。';
 }
 
 // 通用洞察生成函数
@@ -750,7 +1211,10 @@ async function generateInsight(level, userPrompt, systemPrompt, sourceCount) {
         }
       ],
       temperature: 0.7,
-      stream: true
+      stream: true,
+      stream_options: {
+        include_usage: true  // vLLM 需要这个选项来在流式响应中包含 usage
+      }
     };
     
     const resp = await fetch(insightApiUrlInput.value, {
@@ -765,6 +1229,7 @@ async function generateInsight(level, userPrompt, systemPrompt, sourceCount) {
     
     const reader = resp.body.getReader();
     const decoder = new TextDecoder();
+    let usageData = null;
     
     while (true) {
       const { done, value } = await reader.read();
@@ -780,18 +1245,54 @@ async function generateInsight(level, userPrompt, systemPrompt, sourceCount) {
           
           try {
             const json = JSON.parse(data);
-            if (json.choices && json.choices[0] && json.choices[0].delta) {
-              const content = json.choices[0].delta.content || '';
-              if (content) {
-                fullText += content;
+            
+            // 提取 token 使用信息（可能在任何数据包中）
+            if (json.usage) {
+              usageData = json.usage;
+            }
+            
+            // 处理内容
+            if (json.choices && json.choices[0]) {
+              const choice = json.choices[0];
+              
+              // 检查 delta 中的内容（流式）
+              if (choice.delta && choice.delta.content) {
+                fullText += choice.delta.content;
                 contentDiv.innerHTML = marked.parse(fullText);
+              }
+              
+              // 检查 message 中的内容（某些实现）
+              if (choice.message && choice.message.content) {
+                fullText += choice.message.content;
+                contentDiv.innerHTML = marked.parse(fullText);
+              }
+              
+              // 检查 finish_reason，可能伴随 usage
+              if (choice.finish_reason && json.usage) {
+                usageData = json.usage;
+                console.log('在 finish_reason 处获取到 usage:', json.usage);
               }
             }
           } catch (e) {
             // 忽略解析错误
+            console.debug('JSON 解析失败:', line);
           }
         }
       }
+    }
+    
+    // 更新洞察模型的 token 统计
+    if (usageData) {
+      updateInsightTokens(
+        usageData.prompt_tokens || 0,
+        usageData.completion_tokens || 0
+      );
+    } else {
+      // 如果没有 usage 数据，使用估算值
+      // 粗略估算：中文约 1.5 字符/token，英文约 4 字符/token
+      const estimatedInputTokens = Math.ceil((systemPrompt.length + userPrompt.length) / 2);
+      const estimatedOutputTokens = Math.ceil(fullText.length / 2);
+      updateInsightTokens(estimatedInputTokens, estimatedOutputTokens);
     }
     
     // 保存到对应层级的历史中
@@ -860,58 +1361,9 @@ window.switchInsightTab = switchInsightTab;
 function openConfig() {
   const modal = document.getElementById('configModal');
   modal.classList.add('active');
-  
-  // 初始化提示词预览
-  setTimeout(() => {
-    updatePromptPreview();
-    updateInsightPromptPreview();
-  }, 50);
 }
 
-// 更新分析提示词预览
-function updatePromptPreview() {
-  const promptSelect = document.getElementById('promptSelect');
-  const customPrompt = document.getElementById('customPrompt');
-  const promptPreview = document.getElementById('promptPreview');
-  const customRow = document.getElementById('customPromptRow');
-  
-  if (promptSelect.value === 'custom') {
-    customRow.style.display = 'grid';
-    promptPreview.value = customPrompt.value || '(请输入自定义提示词)';
-  } else {
-    customRow.style.display = 'none';
-    promptPreview.value = PROMPT_TEMPLATES[promptSelect.value] || '';
-  }
-}
-
-// 更新洞察系统提示词预览
-function updateInsightPromptPreview() {
-  const insightSelect = document.getElementById('insightSystemPromptSelect');
-  const customInsightPrompt = document.getElementById('customInsightSystemPrompt');
-  const insightPreview = document.getElementById('insightPromptPreview');
-  const customRow = document.getElementById('customInsightPromptRow');
-  
-  if (insightSelect.value === 'custom') {
-    customRow.style.display = 'grid';
-    insightPreview.value = customInsightPrompt.value || '(请输入自定义系统提示词)';
-  } else {
-    customRow.style.display = 'none';
-    insightPreview.value = INSIGHT_SYSTEM_PROMPTS[insightSelect.value] || '';
-  }
-}
-
-// 监听提示词选择变化
-document.getElementById('promptSelect').addEventListener('change', updatePromptPreview);
-document.getElementById('customPrompt').addEventListener('input', updatePromptPreview);
-
-document.getElementById('insightSystemPromptSelect').addEventListener('change', updateInsightPromptPreview);
-document.getElementById('customInsightSystemPrompt').addEventListener('input', updateInsightPromptPreview);
-
-// 初始化提示词预览
-document.addEventListener('DOMContentLoaded', () => {
-  updatePromptPreview();
-  updateInsightPromptPreview();
-});
+// 初始化配置（在主 DOMContentLoaded 中加载）
 
 // 配置选项卡切换函数
 function switchConfigTab(tabName) {
@@ -930,11 +1382,9 @@ function switchConfigTab(tabName) {
   
   // 激活当前选项卡
   const tabMap = {
-    'analysis': 0,
+    'model': 0,
     'prompt': 1,
-    'insight': 2,
-    'interval': 3,
-    'insightPrompt': 4
+    'params': 2
   };
   const tabs = document.querySelectorAll('.config-tab-btn');
   const currentTab = tabs[tabMap[tabName]];
@@ -956,3 +1406,233 @@ function switchConfigTab(tabName) {
 // 暴露函数到全局
 window.switchConfigTab = switchConfigTab;
 window.switchInsightTab = switchInsightTab;
+
+// ==================== 配置管理功能 ====================
+
+// 配置键名
+const CONFIG_KEY = 'vlmA_system_config';
+
+// 默认配置
+const DEFAULT_CONFIG = {
+  // 模型配置
+  apiUrl: 'http://192.168.0.113:8000/v1/chat/completions',
+  modelName: 'RM-01 LLM',
+  insightApiUrl: 'http://192.168.0.159:58000/v1/chat/completions',
+  insightModel: 'RM-01 LLM',
+  
+  // 价格配置（元/千tokens）
+  analysisPriceInput: 0.003,
+  analysisPriceOutput: 0.003,
+  insightPriceInput: 0.002,
+  insightPriceOutput: 0.002,
+  
+  // 提示词配置
+  analysisPrompt: '请描述这些时序图片中的内容,不要逐个描述，请整体简要描述。',
+  insightPrompt: '你是一个专业的信息综合分析专家。你的任务是对已有的信息进行二次总结和提炼，压缩关键信息，识别重要模式。你要处理的信息里面有些信息（可能是本次信息也可能是上一分钟的洞察）可能前后不相关，需要区别整理。',
+  summaryPrompt: '请分析以下所有历史观察记录，提供综合洞察和总结：',
+  
+  // 参数配置
+  interval: 12,
+  fps: 4,
+  insightInterval: 5,
+  fifteenInterval: 15,
+  hourInterval: 4,
+  dayInterval: 24
+};
+
+// 加载配置
+function loadConfig() {
+  try {
+    const savedConfig = localStorage.getItem(CONFIG_KEY);
+    if (savedConfig) {
+      const config = JSON.parse(savedConfig);
+      applyConfig(config);
+      console.log('配置已加载:', config);
+      return config;
+    }
+  } catch (err) {
+    console.error('加载配置失败:', err);
+  }
+  return null;
+}
+
+// 应用配置到界面
+function applyConfig(config) {
+  // 模型配置
+  if (config.apiUrl) apiUrlInput.value = config.apiUrl;
+  if (config.modelName) modelNameInput.value = config.modelName;
+  if (config.insightApiUrl) insightApiUrlInput.value = config.insightApiUrl;
+  if (config.insightModel) insightModelInput.value = config.insightModel;
+  
+  // 价格配置
+  const analysisPriceInputEl = document.getElementById('analysisPriceInput');
+  const analysisPriceOutputEl = document.getElementById('analysisPriceOutput');
+  const insightPriceInputEl = document.getElementById('insightPriceInput');
+  const insightPriceOutputEl = document.getElementById('insightPriceOutput');
+  if (config.analysisPriceInput !== undefined && analysisPriceInputEl) analysisPriceInputEl.value = config.analysisPriceInput;
+  if (config.analysisPriceOutput !== undefined && analysisPriceOutputEl) analysisPriceOutputEl.value = config.analysisPriceOutput;
+  if (config.insightPriceInput !== undefined && insightPriceInputEl) insightPriceInputEl.value = config.insightPriceInput;
+  if (config.insightPriceOutput !== undefined && insightPriceOutputEl) insightPriceOutputEl.value = config.insightPriceOutput;
+  
+  // 提示词配置
+  const analysisPromptInput = document.getElementById('analysisPromptInput');
+  const insightPromptInput = document.getElementById('insightPromptInput');
+  if (config.analysisPrompt && analysisPromptInput) analysisPromptInput.value = config.analysisPrompt;
+  if (config.insightPrompt && insightPromptInput) insightPromptInput.value = config.insightPrompt;
+  if (config.summaryPrompt) summaryPromptInput.value = config.summaryPrompt;
+  
+  // 参数配置
+  if (config.interval) intervalInput.value = config.interval;
+  if (config.fps) fpsInput.value = config.fps;
+  if (config.insightInterval) insightIntervalInput.value = config.insightInterval;
+  if (config.fifteenInterval) fifteenIntervalInput.value = config.fifteenInterval;
+  if (config.hourInterval) hourIntervalInput.value = config.hourInterval;
+  if (config.dayInterval) dayIntervalInput.value = config.dayInterval;
+  
+  // 更新费用显示
+  updateCostDisplay();
+}
+
+// 获取当前配置
+function getCurrentConfig() {
+  const analysisPromptInput = document.getElementById('analysisPromptInput');
+  const insightPromptInput = document.getElementById('insightPromptInput');
+  const analysisPriceInputEl = document.getElementById('analysisPriceInput');
+  const analysisPriceOutputEl = document.getElementById('analysisPriceOutput');
+  const insightPriceInputEl = document.getElementById('insightPriceInput');
+  const insightPriceOutputEl = document.getElementById('insightPriceOutput');
+  
+  return {
+    // 模型配置
+    apiUrl: apiUrlInput.value.trim(),
+    modelName: modelNameInput.value.trim(),
+    insightApiUrl: insightApiUrlInput.value.trim(),
+    insightModel: insightModelInput.value.trim(),
+    
+    // 价格配置
+    analysisPriceInput: parseFloat(analysisPriceInputEl?.value || DEFAULT_CONFIG.analysisPriceInput),
+    analysisPriceOutput: parseFloat(analysisPriceOutputEl?.value || DEFAULT_CONFIG.analysisPriceOutput),
+    insightPriceInput: parseFloat(insightPriceInputEl?.value || DEFAULT_CONFIG.insightPriceInput),
+    insightPriceOutput: parseFloat(insightPriceOutputEl?.value || DEFAULT_CONFIG.insightPriceOutput),
+    
+    // 提示词配置
+    analysisPrompt: analysisPromptInput ? analysisPromptInput.value.trim() : DEFAULT_CONFIG.analysisPrompt,
+    insightPrompt: insightPromptInput ? insightPromptInput.value.trim() : DEFAULT_CONFIG.insightPrompt,
+    summaryPrompt: summaryPromptInput.value.trim(),
+    
+    // 参数配置
+    interval: parseInt(intervalInput.value) || 12,
+    fps: parseInt(fpsInput.value) || 4,
+    insightInterval: parseInt(insightIntervalInput.value) || 5,
+    fifteenInterval: parseInt(fifteenIntervalInput.value) || 15,
+    hourInterval: parseInt(hourIntervalInput.value) || 4,
+    dayInterval: parseInt(dayIntervalInput.value) || 24
+  };
+}
+
+// 保存配置
+function saveConfig(config) {
+  try {
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+    console.log('配置已保存:', config);
+    return true;
+  } catch (err) {
+    console.error('保存配置失败:', err);
+    return false;
+  }
+}
+
+// 显示保存成功提示
+function showSaveNotification(message = '配置已保存') {
+  // 移除旧的提示
+  const oldNotif = document.getElementById('saveNotification');
+  if (oldNotif) oldNotif.remove();
+  
+  // 创建新提示
+  const notification = document.createElement('div');
+  notification.id = 'saveNotification';
+  notification.style.cssText = 'position: fixed; top: 80px; right: 20px; padding: 12px 20px; background: linear-gradient(135deg, #20bf6b 0%, #26de81 100%); color: white; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 12px rgba(32, 191, 107, 0.4); z-index: 1000; animation: slideInRight 0.3s ease;';
+  notification.innerHTML = '✅ ' + message;
+  document.body.appendChild(notification);
+  
+  // 3秒后自动移除
+  setTimeout(() => {
+    notification.style.animation = 'slideOutRight 0.3s ease';
+    setTimeout(() => notification.remove(), 300);
+  }, 3000);
+}
+
+// 保存模型配置按钮
+document.getElementById('saveModelConfigBtn')?.addEventListener('click', () => {
+  const config = getCurrentConfig();
+  if (saveConfig(config)) {
+    showSaveNotification('模型配置已保存');
+  } else {
+    alert('保存失败，请重试');
+  }
+});
+
+// 保存提示词配置按钮
+document.getElementById('savePromptConfigBtn')?.addEventListener('click', () => {
+  const config = getCurrentConfig();
+  if (saveConfig(config)) {
+    showSaveNotification('提示词配置已保存');
+  } else {
+    alert('保存失败，请重试');
+  }
+});
+
+// 保存参数配置按钮
+document.getElementById('saveParamsConfigBtn')?.addEventListener('click', () => {
+  const config = getCurrentConfig();
+  if (saveConfig(config)) {
+    showSaveNotification('参数配置已保存');
+  } else {
+    alert('保存失败，请重试');
+  }
+});
+
+// 恢复初始设置按钮
+document.getElementById('resetConfigBtn')?.addEventListener('click', () => {
+  if (confirm('确定要恢复初始设置吗？这将清除所有已保存的配置，此操作不可撤销。')) {
+    try {
+      // 清除 localStorage
+      localStorage.removeItem(CONFIG_KEY);
+      
+      // 应用默认配置到界面
+      applyConfig(DEFAULT_CONFIG);
+      
+      showSaveNotification('✅ 已恢复初始设置');
+      console.log('配置已重置为默认值');
+    } catch (err) {
+      console.error('恢复初始设置失败:', err);
+      alert('恢复初始设置失败，请重试');
+    }
+  }
+});
+
+// 清空 Token 统计按钮
+document.getElementById('clearTokenStatsBtn')?.addEventListener('click', clearTokenStats);
+
+// 页面加载时初始化所有功能
+window.addEventListener('DOMContentLoaded', () => {
+  console.log('页面初始化开始...');
+  
+  // 初始化图片模态框
+  initImageModal();
+  
+  // 加载设备列表
+  console.log('正在加载设备列表...');
+  requestDeviceList();
+  
+  // 加载配置
+  console.log('正在加载配置...');
+  loadConfig();
+  
+  // 加载 Token 统计
+  console.log('正在加载 Token 统计...');
+  loadTokenStats();
+  
+  console.log('页面初始化完成');
+});
+
