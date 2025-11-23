@@ -52,16 +52,7 @@
       "!.github",
       "!assets/source"
     ],
-    "extraResources": [
-      {
-        "from": "server",
-        "to": "server",
-        "filter": ["**/*", "!server-local.log", "!server-local.pid"]
-      }
-    ],
-    "asarUnpack": [
-      "server/**/*"
-    ],
+    "afterPack": "./build-scripts/afterPack.js",
     "mac": {
       "icon": "favicon_io/android-chrome-512x512.png",
       "category": "public.app-category.developer-tools",
