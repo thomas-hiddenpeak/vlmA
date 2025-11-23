@@ -767,6 +767,22 @@
       <p>基于 VLM 的多模态分析PE测试平台 </p>
     </div>
     
+    <!-- 快速开始提示 -->
+    <div style="max-width: 1400px; margin: 0 auto 20px auto; background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%); padding: 16px 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); animation: fadeIn 0.6s ease-out;">
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div style="font-size: 2.5rem;">🚀</div>
+        <div style="flex: 1;">
+          <div style="font-weight: 700; font-size: 1rem; color: #333; margin-bottom: 4px;">快速开始</div>
+          <div style="font-size: 0.85rem; color: #666; line-height: 1.5;">
+            还没有 API Key？点击右侧按钮免费获取阿里云百炼 API Key，然后在「模型配置」中填入即可开始使用！
+          </div>
+        </div>
+        <a href="https://bailian.console.aliyun.com/?tab=model#/api-key" target="_blank" style="padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; white-space: nowrap; transition: all 0.3s; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); display: inline-flex; align-items: center; gap: 8px;">
+          🔑 免费获取 API Key
+        </a>
+      </div>
+    </div>
+    
     <div class="main-content">
       <!-- 左侧容器：视频预览 + 系统配置 -->
       <div style="display: flex; flex-direction: column; gap: 20px;">
@@ -920,7 +936,15 @@
                   </div>
                   <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center;">
                     <label style="font-size: 0.85rem; color: #666;">API Key</label>
-                    <input id="apiKeyInput" type="password" placeholder="留空表示无需认证(本地模型)" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem;" />
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                      <input id="apiKeyInput" type="password" placeholder="留空表示无需认证(本地模型)" style="flex: 1; padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem;" />
+                      <a href="https://bailian.console.aliyun.com/?tab=model#/api-key" target="_blank" style="padding: 6px 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 6px; font-size: 0.75rem; white-space: nowrap; transition: all 0.3s; display: inline-flex; align-items: center; gap: 4px;" title="获取阿里云百炼 API Key">
+                        🔑 获取 Key
+                      </a>
+                    </div>
+                  </div>
+                  <div style="font-size: 0.75rem; color: #999; padding: 6px 8px; background: white; border-radius: 4px; margin-top: -4px;">
+                    💡 使用阿里云百炼：点击「获取 Key」按钮免费申请 API Key，支持 qwen-vl-plus/qwen-vl-max 等视觉模型
                   </div>
                   <div style="display: grid; grid-template-columns: 100px 1fr 1fr; gap: 8px; align-items: center;">
                     <label style="font-size: 0.85rem; color: #666;">单价(元/千)</label>
@@ -944,7 +968,15 @@
                   </div>
                   <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center;">
                     <label style="font-size: 0.85rem; color: #666;">API Key</label>
-                    <input id="insightApiKeyInput" type="password" placeholder="留空表示无需认证(本地模型)" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem;" />
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                      <input id="insightApiKeyInput" type="password" placeholder="留空表示无需认证(本地模型)" style="flex: 1; padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem;" />
+                      <a href="https://bailian.console.aliyun.com/?tab=model#/api-key" target="_blank" style="padding: 6px 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 6px; font-size: 0.75rem; white-space: nowrap; transition: all 0.3s; display: inline-flex; align-items: center; gap: 4px;" title="获取阿里云百炼 API Key">
+                        🔑 获取 Key
+                      </a>
+                    </div>
+                  </div>
+                  <div style="font-size: 0.75rem; color: #999; padding: 6px 8px; background: white; border-radius: 4px; margin-top: -4px;">
+                    💡 使用阿里云百炼：点击「获取 Key」按钮免费申请 API Key，支持 qwen-max/qwen-plus 等文本模型
                   </div>
                   <div style="display: grid; grid-template-columns: 100px 1fr 1fr; gap: 8px; align-items: center;">
                     <label style="font-size: 0.85rem; color: #666;">单价(元/千)</label>

@@ -2,6 +2,21 @@
 
 基于 VLM 的多模态分析PE测试平台，支持本地 UVC 摄像头采集、多层级洞察分析和流式输出。支持打包为跨平台桌面应用。
 
+## 🚀 在线体验
+
+**演示地址**: [https://vlma.xapp.aoseo.com/](https://vlma.xapp.aoseo.com/)
+
+无需安装，直接在浏览器中体验完整功能！
+
+**快速开始：**
+1. 访问演示地址
+2. 获取阿里云百炼 API Key：[立即获取](https://bailian.console.aliyun.com/?tab=model#/api-key)
+3. 在系统配置中填入 API Key
+4. 允许浏览器访问摄像头
+5. 开始分析！
+
+> 💡 **提示**：默认已配置阿里云百炼模型，只需填入你的 API Key 即可使用。
+
 ## 功能特性
 
 ### 视频采集
@@ -51,14 +66,45 @@
 
 ## 快速开始
 
-### 1. 安装依赖
+### 方式一：在线体验（推荐）
+
+1. **访问演示站点**  
+   打开 [https://vlma.xapp.aoseo.com/](https://vlma.xapp.aoseo.com/)
+
+2. **获取 API Key**  
+   前往 [阿里云百炼控制台](https://bailian.console.aliyun.com/?tab=model#/api-key) 获取免费 API Key
+   
+   ![API Key 获取](https://img.alicdn.com/imgextra/i3/O1CN01qKQZ8i1YZ8F0YZ8F0_!!6000000003073-2-tps-2880-1800.png)
+   
+   **步骤：**
+   - 登录阿里云账号
+   - 进入百炼控制台
+   - 点击「API-KEY」标签
+   - 点击「创建新的 API-KEY」
+   - 复制生成的 Key（以 `sk-` 开头）
+
+3. **配置系统**
+   - 在「模型配置」选项卡中
+   - 将 API Key 粘贴到「API Key」输入框
+   - 其他配置保持默认即可（已预设为阿里云百炼）
+
+4. **开始使用**
+   - 允许浏览器访问摄像头
+   - 选择摄像头设备
+   - 点击「▶️ 开始分析与采集」
+
+> 💰 **费用说明**：阿里云百炼提供免费额度，具体请查看 [百炼价格说明](https://help.aliyun.com/zh/model-studio/getting-started/models)
+
+### 方式二：本地部署
+
+#### 1. 安装依赖
 
 ```bash
 cd server
 npm install
 ```
 
-### 2. 启动服务
+#### 2. 启动服务
 
 ```bash
 npm start
@@ -66,17 +112,30 @@ npm start
 
 服务默认运行在 `http://localhost:43003`
 
-### 3. 打开浏览器
+#### 3. 打开浏览器
 
 访问 `http://localhost:43003/`
 
 **重要**：摄像头访问需要安全上下文（HTTPS 或 localhost），首次访问需要授权摄像头权限。
 
-### 4. 开始分析
+#### 4. 配置模型
+
+**使用阿里云百炼（推荐）：**
+- API 地址：`https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions`（已预设）
+- 视觉模型：`qwen-vl-plus`（已预设）
+- 文本模型：`qwen-max`（已预设）
+- API Key：[点击获取](https://bailian.console.aliyun.com/?tab=model#/api-key)
+
+**使用本地模型：**
+- 留空 API Key
+- 修改 API 地址为你的本地模型地址
+- 修改模型名称为你的模型名
+
+#### 5. 开始分析
 
 1. 从下拉列表选择 UVC 摄像头设备
 2. 点击"刷新设备列表"按钮获取最新设备（如需要）
-3. 点击"▶️ 开始分析"按钮
+3. 点击"▶️ 开始分析与采集"按钮
    - 自动启动视频流
    - 开始定时采集和分析
 4. 点击"⏹️ 停止分析"按钮停止所有功能
