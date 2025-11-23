@@ -322,6 +322,24 @@ npm run build:linux
 - macOS: `.dmg` 镜像文件（支持 Intel 和 Apple Silicon）
 - Linux: `.AppImage` 和 `.deb` 包
 
+### macOS 用户必读 ⚠️
+
+macOS 用户首次运行应用时可能遇到"应用已损坏"或"无法打开"的提示。这是正常的安全机制，请查看详细解决方案：
+
+📖 **[macOS 安装使用指南](MACOS_INSTALL.md)**
+
+**快速解决方法：**
+
+```bash
+# 在终端中运行以下命令移除隔离属性
+sudo xattr -rd com.apple.quarantine "/Applications/RMinte 多模态分析引擎.app"
+```
+
+同时需要：
+- ✅ 授予摄像头访问权限
+- ✅ 确保已安装 Node.js（后端服务器需要）
+- ✅ 根据芯片类型选择正确版本（Apple Silicon 选 arm64，Intel 选标准版）
+
 ### GitHub Actions 自动构建
 
 项目已配置 GitHub Actions 自动构建。创建版本标签即可触发：
