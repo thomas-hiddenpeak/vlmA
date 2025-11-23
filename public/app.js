@@ -1378,15 +1378,11 @@ async function generateInsight(level, userPrompt, systemPrompt, sourceCount) {
     
     console.log(`✅ ${config.label}洞察 #${currentCount} 生成完成`);
     
-    // 任务提取:所有洞察级别
-    const sourceMap = {
-      'minute': '1分钟洞察',
-      'fifteen': '15分钟洞察',
-      'hour': '1小时洞察',
-      'day': '每日洞察'
-    };
-    const source = sourceMap[level] || `${config.label}洞察`;
-    await extractTasksFromText(fullText, source);
+    // 任务提取:小时洞察和每日洞察
+    if (level === 'hour' || level === 'day') {
+      const source = level === 'hour' ? '1小时洞察' : '每日洞察';
+      await extractTasksFromText(fullText, source);
+    }
     
     // 检查是否需要触发下一级洞察（逐级触发）
     checkNextLevelInsight(level);
@@ -1887,6 +1883,8 @@ async function extractTasksFromText(content, source = '未知') {
     }
     
     console.log(`正在从${source}提取任务...`);
+    console.log(`任务提示词长度: ${taskPrompt.length}字符`);
+    console.log(`分析内容长度: ${content.length}字符`);
     
     // 调用洞察 API 提取任务
     const insightApiKeyInput = document.getElementById('insightApiKeyInput');
@@ -1913,6 +1911,9 @@ async function extractTasksFromText(content, source = '未知') {
       stream: false
     };
     
+    console.log(`调用API: ${insightApiUrlInput.value}`);
+    console.log(`使用模型: ${requestBody.model}`);
+    
     const resp = await fetch(insightApiUrlInput.value, {
       method: 'POST',
       headers: requestHeaders,
@@ -1920,14 +1921,20 @@ async function extractTasksFromText(content, source = '未知') {
     });
     
     if (!resp.ok) {
+      const errorText = await resp.text();
+      console.error(`API响应错误 (${resp.status}):`, errorText);
       throw new Error(`HTTP error! status: ${resp.status}`);
     }
     
     const result = await resp.json();
     const responseText = result.choices?.[0]?.message?.content || '';
     
+    console.log(`API响应内容:`, responseText.substring(0, 500));
+    console.log(`响应总长度: ${responseText.length}字符`);
+    
     // 解析任务列表
     const tasks = parseTasksFromResponse(responseText);
+    console.log(`解析到的任务数量: ${tasks.length}`);
     
     if (tasks.length > 0) {
       console.log(`从${source}提取到 ${tasks.length} 个任务`);
@@ -1962,18 +1969,26 @@ function parseTasksFromResponse(text) {
   const tasks = [];
   const lines = text.split('\n');
   
-  for (const line of lines) {
+  console.log(`解析任务 - 总行数: ${lines.length}`);
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
     const trimmed = line.trim();
+    
     // 匹配 "- [ ] 任务描述" 格式
     const match = trimmed.match(/^-\s*\[\s*\]\s*(.+)$/);
     if (match && match[1]) {
       const taskDesc = match[1].trim();
+      console.log(`找到任务 [行${i+1}]: ${taskDesc}`);
       if (taskDesc && !tasks.includes(taskDesc)) {
         tasks.push(taskDesc);
       }
+    } else if (trimmed.startsWith('-') || trimmed.startsWith('•')) {
+      console.log(`跳过非标准格式 [行${i+1}]: ${trimmed.substring(0, 50)}`);
     }
   }
   
+  console.log(`最终解析到 ${tasks.length} 个有效任务`);
   return tasks;
 }
 
