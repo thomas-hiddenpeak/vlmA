@@ -1035,8 +1035,11 @@ function initImageModal() {
 function checkAndGenerateInsight() {
   const interval = parseInt(insightIntervalInput.value) || 5;
   
+  console.log(`[洞察检查] 分析历史数量: ${analysisHistory.length}, 配置区间: ${interval}, 是否触发: ${analysisHistory.length % interval === 0}`);
+  
   // 1. 生成60秒洞察：基于原始分析历史
   if (analysisHistory.length > 0 && analysisHistory.length % interval === 0) {
+    console.log(`✅ 触发60秒洞察生成 (第 ${analysisHistory.length / interval} 次)`);
     generateMinuteInsight();
   }
 }
@@ -1047,31 +1050,45 @@ function checkNextLevelInsight(currentLevel) {
   const hourInterval = parseInt(hourIntervalInput.value) || 4;
   const dayInterval = parseInt(dayIntervalInput.value) || 24;
   
+  console.log(`[下一级洞察检查] 当前级别: ${currentLevel}`);
+  console.log(`[配置] 15分钟区间: ${fifteenInterval}, 1小时区间: ${hourInterval}, 每日区间: ${dayInterval}`);
+  console.log(`[数量] 60秒: ${insightLevels.minute.length}, 15分钟: ${insightLevels.fifteen.length}, 1小时: ${insightLevels.hour.length}, 每日: ${insightLevels.day.length}`);
+  
   // 根据当前级别，只检查下一级
   switch(currentLevel) {
     case 'minute':
       // 60秒洞察完成 → 检查是否触发15分钟洞察
-      if (insightLevels.minute.length > 0 && insightLevels.minute.length % fifteenInterval === 0) {
+      const shouldTriggerFifteen = insightLevels.minute.length > 0 && insightLevels.minute.length % fifteenInterval === 0;
+      console.log(`[15分钟检查] 60秒洞察数量: ${insightLevels.minute.length}, 取模结果: ${insightLevels.minute.length % fifteenInterval}, 是否触发: ${shouldTriggerFifteen}`);
+      if (shouldTriggerFifteen) {
+        console.log(`✅ 触发15分钟洞察生成 (第 ${insightLevels.minute.length / fifteenInterval} 次)`);
         setTimeout(() => generateFifteenInsight(), 500);
       }
       break;
       
     case 'fifteen':
       // 15分钟洞察完成 → 检查是否触发1小时洞察
-      if (insightLevels.fifteen.length > 0 && insightLevels.fifteen.length % hourInterval === 0) {
+      const shouldTriggerHour = insightLevels.fifteen.length > 0 && insightLevels.fifteen.length % hourInterval === 0;
+      console.log(`[1小时检查] 15分钟洞察数量: ${insightLevels.fifteen.length}, 取模结果: ${insightLevels.fifteen.length % hourInterval}, 是否触发: ${shouldTriggerHour}`);
+      if (shouldTriggerHour) {
+        console.log(`✅ 触发1小时洞察生成 (第 ${insightLevels.fifteen.length / hourInterval} 次)`);
         setTimeout(() => generateHourInsight(), 500);
       }
       break;
       
     case 'hour':
       // 1小时洞察完成 → 检查是否触发每日洞察
-      if (insightLevels.hour.length > 0 && insightLevels.hour.length % dayInterval === 0) {
+      const shouldTriggerDay = insightLevels.hour.length > 0 && insightLevels.hour.length % dayInterval === 0;
+      console.log(`[每日检查] 1小时洞察数量: ${insightLevels.hour.length}, 取模结果: ${insightLevels.hour.length % dayInterval}, 是否触发: ${shouldTriggerDay}`);
+      if (shouldTriggerDay) {
+        console.log(`✅ 触发每日洞察生成 (第 ${insightLevels.hour.length / dayInterval} 次)`);
         setTimeout(() => generateDayInsight(), 500);
       }
       break;
       
     case 'day':
       // 每日洞察是最高级，无需触发下一级
+      console.log(`[每日洞察] 已是最高级别，无需触发下一级`);
       break;
   }
 }
@@ -1960,5 +1977,14 @@ window.toggleTaskComplete = toggleTaskComplete;
 window.deleteTask = deleteTask;
 window.clearAllTasks = clearAllTasks;
 window.extractTasksFromText = extractTasksFromText;
+
+// 初始化检查
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('[初始化检查] 洞察配置元素:');
+  console.log('  fifteenIntervalInput:', fifteenIntervalInput, 'value:', fifteenIntervalInput?.value);
+  console.log('  hourIntervalInput:', hourIntervalInput, 'value:', hourIntervalInput?.value);
+  console.log('  dayIntervalInput:', dayIntervalInput, 'value:', dayIntervalInput?.value);
+  console.log('  insightIntervalInput:', insightIntervalInput, 'value:', insightIntervalInput?.value);
+});
 
 
