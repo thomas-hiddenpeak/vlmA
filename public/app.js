@@ -1,8 +1,8 @@
 // API 基础 URL - 后端服务器地址
-// 自动检测环境：本地开发使用 localhost，生产环境使用当前域名
+// 使用相对路径,通过Nginx反向代理访问后端
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:43003'
-    : `${window.location.protocol}//${window.location.hostname}:43003`;
+    : `${window.location.protocol}//${window.location.host}/api`;
 
 const video = document.getElementById('video');
 const toggleAnalysisBtn = document.getElementById('toggleAnalysisBtn');
