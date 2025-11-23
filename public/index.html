@@ -1274,20 +1274,28 @@
                 <div style="display: grid; gap: 8px;">
                   <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: start;">
                     <label style="font-size: 0.85rem; color: #666; padding-top: 8px;">提示词</label>
-                    <textarea id="taskPromptInput" placeholder="分析内容并提取待办任务..." style="padding: 8px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-height: 120px; resize: vertical; min-width: 0;">你是一个任务提取助手。请分析以下内容，识别其中需要采取行动的事项，并提取为待办任务。
+                    <textarea id="taskPromptInput" placeholder="分析内容并提取待办任务..." style="padding: 8px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-height: 120px; resize: vertical; min-width: 0;">你是一个任务提取助手。请从以下内容中识别并提取可操作的待办事项。
 
-要求：
-1. 只提取明确需要行动的事项
-2. 每个任务用一行描述，格式：- [ ] 任务描述
-3. 任务描述要简洁明确，包含关键信息
-4. 如果已有任务列表中存在相同或相似的任务，不要重复提取
-5. 如果没有新的待办事项，返回空列表
-6. 不要添加额外的解释或分析
+## 提取规则
+1. **问题/异常** → 转化为排查或修复任务
+2. **观察到的变化** → 转化为跟进或确认任务
+3. **数据/指标** → 转化为分析或监控任务
+4. **建议/优化点** → 转化为具体行动任务
+5. **未完成的事项** → 直接作为待办任务
 
-示例输出：
-- [ ] 检查服务器CPU使用率异常问题
-- [ ] 更新API文档中的认证说明
-- [ ] 联系客户确认需求变更</textarea>
+## 输出格式
+每个任务占一行，格式必须为：- [ ] 任务描述
+
+## 示例
+输入："CPU使用率升高到85%，需要排查原因"
+输出：- [ ] 排查服务器CPU使用率异常问题
+
+输入："用户反馈登录慢，可能是数据库连接池不足"
+输出：- [ ] 检查数据库连接池配置并优化
+
+## 注意
+- 如果内容是纯描述性的日常状态，返回：[]
+- 只输出任务列表或空列表，不要有其他文字</textarea>
                   </div>
                   <div style="font-size: 0.75rem; color: #999; padding: 8px; background: white; border-radius: 6px;">
                     ℹ️ 此提示词用于从汇总分析和洞察结果中提取待办任务。系统会在生成汇总、1小时洞察和每日洞察后自动调用。
