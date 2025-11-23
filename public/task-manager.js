@@ -117,6 +117,21 @@ async function extractTasksFromText(content, source = '未知') {
     
     console.log(`正在从${source}提取任务...`);
     
+    // 构建当前已有任务的上下文
+    let existingTasksContext = '';
+    if (taskList.length > 0) {
+      existingTasksContext = '\n\n【当前已有任务列表】（用于避免重复提取相同任务）\n';
+      taskList.forEach((task, index) => {
+        const status = task.completed ? '✅' : '⬜';
+        existingTasksContext += `${index + 1}. ${status} ${task.description}`;
+        if (task.source) {
+          existingTasksContext += ` (来源: ${task.source})`;
+        }
+        existingTasksContext += '\n';
+      });
+      existingTasksContext += '\n请注意：如果新内容中的任务与上述已有任务重复或高度相似，请不要重复提取。只提取新的、不同的任务。\n';
+    }
+    
     // 调用洞察 API 提取任务
     const insightApiKeyInput = document.getElementById('insightApiKeyInput');
     const insightApiKey = insightApiKeyInput ? insightApiKeyInput.value.trim() : '';
@@ -135,7 +150,7 @@ async function extractTasksFromText(content, source = '未知') {
         },
         {
           role: 'user',
-          content: content
+          content: existingTasksContext + '\n【待分析的新内容】\n' + content
         }
       ],
       temperature: 0.3,
