@@ -606,9 +606,14 @@ async function sendFramesForAnalysis() {
     const promptText = analysisPromptInput ? analysisPromptInput.value.trim() : '请描述这些时序图片中的内容,不要逐个描述，请整体简要描述。';
     form.append('prompt', promptText);
     
-    // 添加 API URL 和模型名称
+    // 添加 API URL、模型名称和 API Key
     form.append('apiUrl', apiUrlInput.value);
     form.append('modelName', modelNameInput.value);
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const apiKey = apiKeyInput ? apiKeyInput.value.trim() : '';
+    if (apiKey) {
+      form.append('apiKey', apiKey);
+    }
 
     statusSpan.textContent = `正在分析 ${framesWithTimestamps.length} 帧...`;
     
@@ -819,15 +824,24 @@ async function stopCollectionAndSummarize() {
     const summaryPrompt = summaryPromptInput.value.trim() || '请分析以下所有历史观察记录，提供综合洞察和总结：';
     const insightApiUrl = insightApiUrlInput.value.trim();
     const insightModel = insightModelInput.value.trim();
+    const insightApiKeyInput = document.getElementById('insightApiKeyInput');
+    const insightApiKey = insightApiKeyInput ? insightApiKeyInput.value.trim() : '';
+    
+    const requestBody = {
+      summaryPrompt,
+      apiUrl: insightApiUrl,
+      modelName: insightModel
+    };
+    
+    // 如果有 API Key，添加到请求体中
+    if (insightApiKey) {
+      requestBody.apiKey = insightApiKey;
+    }
     
     const response = await fetch(`${API_BASE_URL}/collection/stop`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        summaryPrompt,
-        apiUrl: insightApiUrl,
-        modelName: insightModel
-      })
+      body: JSON.stringify(requestBody)
     });
     
     if (!response.ok) {
@@ -870,7 +884,8 @@ async function stopCollectionAndSummarize() {
             const content = parsed.choices?.[0]?.delta?.content;
             if (content) {
               summaryText += content;
-              summaryResult.textContent = summaryText;
+              // 使用 marked.parse() 渲染 Markdown
+              summaryResult.innerHTML = marked.parse(summaryText);
               // 自动滚动到底部
               summaryResult.scrollTop = summaryResult.scrollHeight;
             }
@@ -1217,9 +1232,17 @@ async function generateInsight(level, userPrompt, systemPrompt, sourceCount) {
       }
     };
     
+    // 构建请求头
+    const requestHeaders = { 'Content-Type': 'application/json' };
+    const insightApiKeyInput = document.getElementById('insightApiKeyInput');
+    const insightApiKey = insightApiKeyInput ? insightApiKeyInput.value.trim() : '';
+    if (insightApiKey) {
+      requestHeaders['Authorization'] = `Bearer ${insightApiKey}`;
+    }
+    
     const resp = await fetch(insightApiUrlInput.value, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: requestHeaders,
       body: JSON.stringify(requestBody)
     });
     
@@ -1417,8 +1440,10 @@ const DEFAULT_CONFIG = {
   // 模型配置
   apiUrl: 'http://192.168.0.113:8000/v1/chat/completions',
   modelName: 'RM-01 LLM',
+  apiKey: '',  // 分析模型 API Key，留空表示本地模型
   insightApiUrl: 'http://192.168.0.159:58000/v1/chat/completions',
   insightModel: 'RM-01 LLM',
+  insightApiKey: '',  // 洞察模型 API Key，留空表示本地模型
   
   // 价格配置（元/千tokens）
   analysisPriceInput: 0.003,
@@ -1461,8 +1486,13 @@ function applyConfig(config) {
   // 模型配置
   if (config.apiUrl) apiUrlInput.value = config.apiUrl;
   if (config.modelName) modelNameInput.value = config.modelName;
+  const apiKeyInput = document.getElementById('apiKeyInput');
+  if (apiKeyInput && config.apiKey !== undefined) apiKeyInput.value = config.apiKey;
+  
   if (config.insightApiUrl) insightApiUrlInput.value = config.insightApiUrl;
   if (config.insightModel) insightModelInput.value = config.insightModel;
+  const insightApiKeyInput = document.getElementById('insightApiKeyInput');
+  if (insightApiKeyInput && config.insightApiKey !== undefined) insightApiKeyInput.value = config.insightApiKey;
   
   // 价格配置
   const analysisPriceInputEl = document.getElementById('analysisPriceInput');
@@ -1501,13 +1531,17 @@ function getCurrentConfig() {
   const analysisPriceOutputEl = document.getElementById('analysisPriceOutput');
   const insightPriceInputEl = document.getElementById('insightPriceInput');
   const insightPriceOutputEl = document.getElementById('insightPriceOutput');
+  const apiKeyInput = document.getElementById('apiKeyInput');
+  const insightApiKeyInput = document.getElementById('insightApiKeyInput');
   
   return {
     // 模型配置
     apiUrl: apiUrlInput.value.trim(),
     modelName: modelNameInput.value.trim(),
+    apiKey: apiKeyInput ? apiKeyInput.value.trim() : '',
     insightApiUrl: insightApiUrlInput.value.trim(),
     insightModel: insightModelInput.value.trim(),
+    insightApiKey: insightApiKeyInput ? insightApiKeyInput.value.trim() : '',
     
     // 价格配置
     analysisPriceInput: parseFloat(analysisPriceInputEl?.value || DEFAULT_CONFIG.analysisPriceInput),

@@ -193,9 +193,10 @@ app.post('/analyze', uploadMiddleware, async (req, res) => {
     // 获取自定义prompt，如果没有则使用默认
     const userPrompt = req.body.prompt || '请描述这些图片中的内容。';
     
-    // 获取API URL和模型名称，如果没有则使用默认值
+    // 获取API URL、模型名称和API Key，如果没有则使用默认值
     const apiUrl = req.body.apiUrl || MODEL_URL;
     const modelName = req.body.modelName || MODEL_NAME;
+    const apiKey = req.body.apiKey || '';  // API Key，留空表示本地模型
 
     // 构建 OpenAI 兼容的请求体（vllm 多模态格式）
     // 多图片格式：先放所有图片，然后是文本
@@ -231,9 +232,15 @@ app.post('/analyze', uploadMiddleware, async (req, res) => {
     // 收集完整的响应文本用于历史记录
     let fullResponse = '';
 
-    // 发送到 vllm 服务，启用流式响应
+    // 构建请求头
+    const requestHeaders = { 'Content-Type': 'application/json' };
+    if (apiKey) {
+      requestHeaders['Authorization'] = `Bearer ${apiKey}`;
+    }
+
+    // 发送到 vllm 服务或 OpenAI 兼容服务，启用流式响应
     const resp = await axios.post(apiUrl, requestBody, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: requestHeaders,
       timeout: 120000,
       responseType: 'stream'
     });
@@ -285,8 +292,15 @@ app.post('/analyze', uploadMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Proxy error:', err && err.message ? err.message : err);
     if (err.response) {
-      console.error('Response data:', err.response.data);
-      res.status(err.response.status).json(err.response.data);
+      console.error('Response status:', err.response.status);
+      console.error('Response statusText:', err.response.statusText);
+      // 避免循环引用，只发送关键信息
+      res.status(err.response.status).json({ 
+        error: 'API request failed',
+        status: err.response.status,
+        statusText: err.response.statusText,
+        message: err.message
+      });
     } else {
       res.status(500).json({ error: err.message || 'proxy error' });
     }
@@ -342,6 +356,7 @@ app.post('/collection/stop', async (req, res) => {
     const summaryPrompt = req.body.summaryPrompt || SUMMARY_PROMPT;
     const apiUrl = req.body.apiUrl || MODEL_URL;
     const modelName = req.body.modelName || MODEL_NAME;
+    const apiKey = req.body.apiKey || '';  // API Key，留空表示本地模型
     
     // 构建历史记录文本
     let historyText = '';
@@ -378,9 +393,15 @@ app.post('/collection/stop', async (req, res) => {
       status: 'stopped' 
     })}\n\n`);
     
-    // 发送到 vllm 服务
+    // 构建请求头
+    const requestHeaders = { 'Content-Type': 'application/json' };
+    if (apiKey) {
+      requestHeaders['Authorization'] = `Bearer ${apiKey}`;
+    }
+    
+    // 发送到 vllm 服务或 OpenAI 兼容服务
     const resp = await axios.post(apiUrl, requestBody, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: requestHeaders,
       timeout: 120000,
       responseType: 'stream'
     });
@@ -402,7 +423,15 @@ app.post('/collection/stop', async (req, res) => {
   } catch (err) {
     console.error('Collection stop error:', err);
     if (err.response) {
-      res.status(err.response.status).json(err.response.data);
+      console.error('Response status:', err.response.status);
+      console.error('Response statusText:', err.response.statusText);
+      // 避免循环引用，只发送关键信息
+      res.status(err.response.status).json({ 
+        error: 'API request failed',
+        status: err.response.status,
+        statusText: err.response.statusText,
+        message: err.message
+      });
     } else {
       res.status(500).json({ error: err.message });
     }

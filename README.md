@@ -75,8 +75,15 @@ npm start
 ## 系统配置
 
 ### 分析模型配置
-- **API 地址**：分析模型的 API 端点（默认：`http://192.168.0.113:8000/v1/chat/completions`）
-- **模型名称**：使用的模型名称（默认：`RM-01 LLM`）
+- **API 地址**：分析模型的 API 端点
+  - 本地模型：`http://192.168.0.113:8000/v1/chat/completions`
+  - OpenAI：`https://api.openai.com/v1/chat/completions`
+  - 阿里云：`https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions`
+- **模型名称**：使用的模型名称
+  - 本地：`RM-01 LLM`
+  - OpenAI：`gpt-4o`、`gpt-4-vision-preview` 等
+  - 阿里云：`qwen-vl-plus`、`qwen-vl-max` 等
+- **API Key**：API 密钥（留空表示本地模型无需认证）
 - **分析间隔**：每次分析的时间间隔，单位秒（默认：12秒）
 - **采集帧数**：每次分析采集的视频帧数（默认：4帧）
 
@@ -86,8 +93,12 @@ npm start
 - **提示词预览**：实时预览当前使用的提示词
 
 ### 洞察模型配置
-- **洞察 API**：洞察分析的 API 端点（默认：`http://192.168.0.159:58000/v1/chat/completions`）
-- **洞察模型**：洞察使用的模型名称（默认：`RM-01 LLM`）
+- **洞察 API**：洞察分析的 API 端点（支持与分析模型使用不同服务）
+- **洞察模型**：洞察使用的模型名称
+  - 本地：`RM-01 LLM`
+  - OpenAI：`gpt-4o`、`gpt-4-turbo` 等
+  - 阿里云：`qwen-plus`、`qwen-max`、`qwen-turbo` 等
+- **API Key**：洞察模型的 API 密钥（可与分析模型不同）
 
 ### 洞察区间配置
 - **60秒区间**：多少条分析历史触发一次60秒洞察（默认：5条）
@@ -160,6 +171,45 @@ PORT=4000 npm start
 # 在 server.js 中可配置默认的模型 API 地址
 ```
 
+## API 兼容性
+
+系统支持所有 OpenAI 兼容的 API 服务：
+
+### ✅ 已测试兼容
+- **本地 vLLM**：无需 API Key，直接访问
+- **阿里云 DashScope**：使用阿里云 API Key，支持 qwen-vl 系列模型
+- **OpenAI**：使用 OpenAI API Key，支持 GPT-4V 等视觉模型
+
+### 🔧 配置说明
+
+**本地模型（vLLM）：**
+```
+API 地址: http://localhost:8000/v1/chat/completions
+API Key: 留空
+模型: 你部署的模型名称
+```
+
+**阿里云 DashScope：**
+```
+API 地址: https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
+API Key: sk-xxxxx（你的阿里云 API Key）
+视觉模型: qwen-vl-plus, qwen-vl-max
+文本模型: qwen-plus, qwen-max, qwen-turbo
+```
+
+**OpenAI：**
+```
+API 地址: https://api.openai.com/v1/chat/completions
+API Key: sk-xxxxx（你的 OpenAI API Key）
+视觉模型: gpt-4o, gpt-4-vision-preview
+文本模型: gpt-4o, gpt-4-turbo, gpt-3.5-turbo
+```
+
+**其他 OpenAI 兼容服务：**
+- Azure OpenAI
+- 其他云服务商的兼容 API
+- 自部署的兼容服务
+
 ## 浏览器兼容性
 
 | 浏览器 | 支持情况 | 备注 |
@@ -196,6 +246,29 @@ PORT=4000 npm start
 
 ### Q: 如何重置所有配置？
 **A**: 在系统配置面板底部点击"恢复初始设置"按钮，确认后会恢复所有配置到默认值（不会影响统计数据）。
+
+### Q: 如何使用云服务 API（如阿里云、OpenAI）？
+**A**: 在系统配置中：
+1. 填写完整的 API 地址（包括 `/v1/chat/completions`）
+2. 填写对应的模型名称
+3. 填写 API Key（如 `sk-xxxxx`）
+4. 点击保存配置
+
+### Q: API 返回 404 错误？
+**A**: 检查 API 地址是否完整，例如阿里云应该是：
+```
+https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
+```
+而不是：
+```
+https://dashscope.aliyuncs.com/compatible-mode/v1
+```
+
+### Q: 可以混合使用不同的 API 吗？
+**A**: 可以！分析模型和洞察模型可以配置不同的服务：
+- 视觉分析用阿里云 qwen-vl-plus（处理图片）
+- 文本洞察用本地模型或其他文本模型
+- 每个模型都有独立的 API Key 配置
 
 ## 桌面应用打包
 
@@ -254,6 +327,9 @@ git push origin v0.1.0
 - [x] 工作时长追踪
 - [x] 配置持久化（localStorage）
 - [x] 帧缓存缩略图预览
+- [x] API Key 支持（兼容 OpenAI、阿里云等云服务）
+- [x] 历史汇总 Markdown 格式化显示
+- [x] 多服务混合配置（分析和洞察可用不同 API）
 - [ ] 修复停止分析按钮状态切换问题
 - [ ] 支持录制功能（保存视频片段）
 - [ ] 添加分辨率选择
@@ -265,4 +341,3 @@ git push origin v0.1.0
 ## License
 
 MIT
-
