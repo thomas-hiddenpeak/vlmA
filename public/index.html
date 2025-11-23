@@ -2,7 +2,13 @@
 <html lang="zh">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="shortcut icon" href="/favicon.ico">
   <title>RMinte 多模态分析引擎</title>
   <style>
     * {
@@ -16,6 +22,7 @@
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
       padding: 20px;
+      -webkit-text-size-adjust: 100%;
     }
     
     .container {
@@ -47,6 +54,55 @@
       grid-template-columns: 1fr 1fr;
       gap: 20px;
       animation: fadeIn 0.8s ease-out;
+    }
+
+    /* 移动端适配 */
+    @media (max-width: 768px) {
+      body {
+        padding: 12px;
+      }
+
+      .header {
+        margin-bottom: 20px;
+      }
+
+      .header h1 {
+        font-size: 1.8rem;
+      }
+
+      .main-content {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .card {
+        padding: 16px;
+        border-radius: 12px;
+      }
+
+      .controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .control-group {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      #deviceSelect {
+        width: 100%;
+        margin-bottom: 8px;
+      }
+
+      button {
+        width: 100%;
+        padding: 12px;
+      }
+
+      #video {
+        min-height: 240px;
+      }
     }
     
     .card {
