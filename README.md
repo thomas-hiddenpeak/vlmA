@@ -1,5 +1,11 @@
 # RMinte 多模态分析引擎
 
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/thomas-hiddenpeak/vlmA)](https://github.com/thomas-hiddenpeak/vlmA/releases)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![GitHub last commit](https://img.shields.io/github/last-commit/thomas-hiddenpeak/vlmA)](https://github.com/thomas-hiddenpeak/vlmA/commits/main)
+[![GitHub issues](https://img.shields.io/github/issues/thomas-hiddenpeak/vlmA)](https://github.com/thomas-hiddenpeak/vlmA/issues)
+[![GitHub stars](https://img.shields.io/github/stars/thomas-hiddenpeak/vlmA)](https://github.com/thomas-hiddenpeak/vlmA/stargazers)
+
 基于 VLM 的多模态分析PE测试平台,支持本地 UVC 摄像头采集、多层级洞察分析和流式输出。支持打包为跨平台桌面应用。
 
 ## 📑 目录
@@ -636,4 +642,20 @@ git push origin v0.1.0
 
 ## License
 
-MIT
+AGPL-3.0
+
+本项目采用 [GNU Affero General Public License v3.0](LICENSE) 开源协议。
+
+**主要特点：**
+- ✅ **允许商业使用**：可以用于商业项目
+- ✅ **允许修改和分发**：可以自由修改和分发
+- 📝 **必须开源衡生作品**：任何基于此项目的衡生作品必须开源
+- 🌐 **网络服务也需开源**：即使只是通过网络提供服务，也必须提供源代码
+- ⚖️ **同样协议继承**：衡生作品必须使用 AGPL-3.0 协议
+
+**用户权利：**
+- 用户有权索要完整源代码
+- 用户有权知道软件的修改内容
+- 用户可以自由运行、研究、分享和修改软件
+
+详情请参阅 [LICENSE](LICENSE) 文件。
