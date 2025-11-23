@@ -97,6 +97,8 @@
 
 ### 方式二：本地部署
 
+> 💻 **硬件推荐**：想要在本地部署运行大模型？推荐使用 [RM-01 便携 AI 超算中心](https://www.rminte.com/)，即插即用的本地 AI 算力解决方案！
+
 #### 1. 安装依赖
 
 ```bash
@@ -144,7 +146,7 @@ npm start
 
 ### 分析模型配置
 - **API 地址**：分析模型的 API 端点
-  - 本地模型：`http://192.168.0.113:8000/v1/chat/completions`
+  - 本地模型：`http://192.168.0.113:8000/v1/chat/completions`（推荐使用 [RM-01 便携 AI 超算中心](https://www.rminte.com/)）
   - OpenAI：`https://api.openai.com/v1/chat/completions`
   - 阿里云：`https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions`
 - **模型名称**：使用的模型名称
