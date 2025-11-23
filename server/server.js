@@ -339,7 +339,9 @@ app.post('/collection/stop', async (req, res) => {
     }
     
     isCollecting = false;
-    const historyCount = analysisHistory.length;
+    // 立即保存历史记录的快照,避免在汇总过程中被清空
+    const historySnapshot = [...analysisHistory];
+    const historyCount = historySnapshot.length;
     
     console.log(`[${new Date().toISOString()}] Stopped collection. Total entries: ${historyCount}`);
     
@@ -360,7 +362,7 @@ app.post('/collection/stop', async (req, res) => {
     
     // 构建历史记录文本
     let historyText = '';
-    analysisHistory.forEach((entry, index) => {
+    historySnapshot.forEach((entry, index) => {
       historyText += `\n=== 记录 ${index + 1} (${entry.timestamp}) ===\n`;
       historyText += `提示词: ${entry.prompt}\n`;
       historyText += `分析结果: ${entry.response}\n`;
