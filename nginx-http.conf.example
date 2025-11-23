@@ -1,0 +1,49 @@
+# Nginx 配置示例 - HTTP (基础配置)
+# 文件位置: /etc/nginx/sites-available/rminte
+
+server {
+    listen 80;
+    server_name your-domain.com;  # 修改为你的域名或 IP
+
+    # 日志
+    access_log /var/log/nginx/rminte-access.log;
+    error_log /var/log/nginx/rminte-error.log;
+
+    # 代理到 Node.js 应用
+    location / {
+        proxy_pass http://localhost:43003;
+        proxy_http_version 1.1;
+        
+        # WebSocket 支持 (如果需要)
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        
+        # 标准代理头
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # 超时设置
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+        
+        # 缓存控制
+        proxy_cache_bypass $http_upgrade;
+        
+        # 大文件上传支持
+        client_max_body_size 50M;
+    }
+
+    # 健康检查
+    location /health {
+        proxy_pass http://localhost:43003/health;
+        access_log off;
+    }
+}
+
+# 启用配置:
+# sudo ln -s /etc/nginx/sites-available/rminte /etc/nginx/sites-enabled/
+# sudo nginx -t
+# sudo systemctl reload nginx
