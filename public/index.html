@@ -771,8 +771,8 @@
       <!-- 左侧容器：快速开始 + 视频预览 + 系统配置 -->
       <div style="display: flex; flex-direction: column; gap: 20px;">
         <!-- 快速开始提示 -->
-        <div class="card">
-          <div style="display: flex; align-items: center; gap: 12px;">
+        <div id="quickStartCard" class="card" style="display: none;">
+          <div style="display: flex; align-items: center; gap: 12px; position: relative;">
             <div style="font-size: 2rem;">🚀</div>
             <div style="flex: 1;">
               <div style="font-weight: 700; font-size: 0.95rem; color: #333; margin-bottom: 4px;">快速开始</div>
@@ -783,6 +783,7 @@
                 💻 想要本地部署？推荐使用 <a href="https://www.rminte.com/" target="_blank" style="color: #667eea; text-decoration: none; font-weight: 600; border-bottom: 1px solid #667eea;">RM-01 便携 AI 超算中心</a>
               </div>
             </div>
+            <button id="closeQuickStart" style="position: absolute; top: -8px; right: -8px; background: #f5f5f5; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #999; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" title="关闭提示">×</button>
           </div>
         </div>
         
@@ -1217,6 +1218,44 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+  <script>
+    // 快速开始提示逻辑
+    (function() {
+      const quickStartCard = document.getElementById('quickStartCard');
+      const closeBtn = document.getElementById('closeQuickStart');
+      const storageKey = 'quickStartClosed';
+      
+      // 检查是否已关闭
+      if (!localStorage.getItem(storageKey)) {
+        quickStartCard.style.display = 'block';
+      }
+      
+      // 关闭按钮点击事件
+      closeBtn.addEventListener('click', function() {
+        quickStartCard.style.transition = 'opacity 0.3s, transform 0.3s';
+        quickStartCard.style.opacity = '0';
+        quickStartCard.style.transform = 'translateY(-10px)';
+        
+        setTimeout(function() {
+          quickStartCard.style.display = 'none';
+          localStorage.setItem(storageKey, 'true');
+        }, 300);
+      });
+      
+      // 关闭按钮悬停效果
+      closeBtn.addEventListener('mouseenter', function() {
+        this.style.background = '#ff6b6b';
+        this.style.color = 'white';
+        this.style.transform = 'scale(1.1)';
+      });
+      
+      closeBtn.addEventListener('mouseleave', function() {
+        this.style.background = '#f5f5f5';
+        this.style.color = '#999';
+        this.style.transform = 'scale(1)';
+      });
+    })();
+  </script>
   <script src="/app.js"></script>
 </body>
 </html>
