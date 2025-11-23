@@ -154,7 +154,7 @@ function getAvailableDevices(callback) {
 // 使用 memory storage，避免写文件
 const upload = multer({ storage: multer.memoryStorage() });
 
-const MODEL_URL = process.env.MODEL_URL || 'http://192.168.0.113:8000/v1/chat/completions';
+const MODEL_URL = process.env.MODEL_URL || 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
 const MODEL_NAME = process.env.MODEL_NAME || 'RM-01 LLM';
 const SUMMARY_PROMPT = process.env.SUMMARY_PROMPT || '请分析以下所有历史观察记录，提供综合洞察和总结：';
 
