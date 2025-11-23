@@ -155,7 +155,7 @@ function getAvailableDevices(callback) {
 const upload = multer({ storage: multer.memoryStorage() });
 
 const MODEL_URL = process.env.MODEL_URL || 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
-const MODEL_NAME = process.env.MODEL_NAME || 'RM-01 LLM';
+const MODEL_NAME = process.env.MODEL_NAME || 'qwen-vl-plus';
 const SUMMARY_PROMPT = process.env.SUMMARY_PROMPT || '请分析以下所有历史观察记录，提供综合洞察和总结：';
 
 // 采集状态和历史记录

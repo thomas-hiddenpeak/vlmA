@@ -1475,11 +1475,11 @@ const CONFIG_KEY = 'vlmA_system_config';
 // 默认配置
 const DEFAULT_CONFIG = {
   // 模型配置
-  apiUrl: 'http://192.168.0.113:8000/v1/chat/completions',
-  modelName: 'RM-01 LLM',
+  apiUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+  modelName: 'qwen-vl-plus',
   apiKey: '',  // 分析模型 API Key，留空表示本地模型
-  insightApiUrl: 'http://192.168.0.159:58000/v1/chat/completions',
-  insightModel: 'RM-01 LLM',
+  insightApiUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+  insightModel: 'qwen-max',
   insightApiKey: '',  // 洞察模型 API Key，留空表示本地模型
   
   // 价格配置（元/千tokens）
