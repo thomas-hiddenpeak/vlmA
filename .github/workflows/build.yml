@@ -39,6 +39,23 @@ jobs:
         echo "Building version $VERSION"
         # Update package.json version
         npm version $VERSION --no-git-tag-version --allow-same-version
+    
+    - name: Pre-build verification
+      shell: bash
+      run: |
+        echo "=== Checking server directory before build ==="
+        ls -la server/ || echo "Server directory not found"
+        echo ""
+        echo "=== Installing server dependencies manually ==="
+        cd server
+        npm ci --only=production
+        cd ..
+        echo ""
+        echo "=== Verifying server/node_modules ==="
+        ls -la server/node_modules/ | head -20 || echo "node_modules not found"
+        echo ""
+        echo "=== Checking critical dependencies ==="
+        ls server/node_modules/ | grep -E "express|axios|multer|cors" || echo "Critical dependencies missing"
       
     - name: Build Electron app
       run: npm run build
@@ -49,21 +66,71 @@ jobs:
       shell: bash
       run: |
         echo "=== Build output structure ==="
-        ls -la dist/
+        ls -la dist/ || echo "dist directory not found"
         echo ""
-        echo "=== Checking for node_modules in packaged app ==="
+        echo "=== Detailed verification by platform ==="
+        
         if [ "${{ runner.os }}" = "macOS" ]; then
-          echo "macOS build check:"
+          echo ">>> macOS build verification <<<"
           if [ -d "dist/mac-arm64" ]; then
-            ls -la "dist/mac-arm64/RMinte 多模态分析引擎.app/Contents/Resources/server/" || echo "Server directory not found"
-            ls -la "dist/mac-arm64/RMinte 多模态分析引擎.app/Contents/Resources/server/node_modules/" | head -20 || echo "node_modules not found"
+            echo "ARM64 app found"
+            APP_PATH="dist/mac-arm64/RMinte 多模态分析引擎.app/Contents/Resources/server"
+            if [ -d "$APP_PATH" ]; then
+              echo "✓ Server directory exists"
+              ls -la "$APP_PATH/" | head -10
+              if [ -d "$APP_PATH/node_modules" ]; then
+                echo "✓ node_modules exists"
+                ls "$APP_PATH/node_modules/" | head -20
+                echo "✓ Critical dependencies check:"
+                ls "$APP_PATH/node_modules/" | grep -E "express|axios|multer|cors" || echo "✗ Missing dependencies!"
+              else
+                echo "✗ node_modules NOT FOUND!"
+              fi
+            else
+              echo "✗ Server directory NOT FOUND!"
+            fi
           fi
+          if [ -d "dist/mac" ]; then
+            echo "Intel app found"
+            APP_PATH="dist/mac/RMinte 多模态分析引擎.app/Contents/Resources/server"
+            if [ -d "$APP_PATH" ]; then
+              echo "✓ Server directory exists"
+              if [ -d "$APP_PATH/node_modules" ]; then
+                echo "✓ node_modules exists"
+                ls "$APP_PATH/node_modules/" | head -10
+              else
+                echo "✗ node_modules NOT FOUND!"
+              fi
+            else
+              echo "✗ Server directory NOT FOUND!"
+            fi
+          fi
+          
         elif [ "${{ runner.os }}" = "Windows" ]; then
-          echo "Windows build check:"
-          find dist -name "server" -type d | head -3
+          echo ">>> Windows build verification <<<"
+          find dist -type d -name "server" | while read serverdir; do
+            echo "Found server at: $serverdir"
+            ls -la "$serverdir/" | head -10
+            if [ -d "$serverdir/node_modules" ]; then
+              echo "✓ node_modules exists"
+              ls "$serverdir/node_modules/" | head -20
+            else
+              echo "✗ node_modules NOT FOUND at $serverdir"
+            fi
+          done
+          
         elif [ "${{ runner.os }}" = "Linux" ]; then
-          echo "Linux build check:"
-          find dist -name "server" -type d | head -3
+          echo ">>> Linux build verification <<<"
+          find dist -type d -name "server" | while read serverdir; do
+            echo "Found server at: $serverdir"
+            ls -la "$serverdir/" | head -10
+            if [ -d "$serverdir/node_modules" ]; then
+              echo "✓ node_modules exists"
+              ls "$serverdir/node_modules/" | head -20
+            else
+              echo "✗ node_modules NOT FOUND at $serverdir"
+            fi
+          done
         fi
         
     - name: Upload artifacts
