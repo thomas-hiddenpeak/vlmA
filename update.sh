@@ -60,29 +60,29 @@ echo -e "${YELLOW}步骤 4/6: 重启服务...${NC}"
 
 # 尝试停止服务
 echo "停止现有服务..."
-pm2 stop rminte || true
+pm2 stop rminte 2>/dev/null || true
 
 # 强制清理端口占用 (防止 EADDRINUSE)
 PORT=43003
 echo "检查端口 $PORT 占用情况..."
 
 # 尝试使用 lsof
-if command -v lsof >/dev/null; then
-    PIDS=$(lsof -t -i:$PORT)
+if command -v lsof >/dev/null 2>&1; then
+    PIDS=$(lsof -t -i:$PORT 2>/dev/null || true)
     if [ -n "$PIDS" ]; then
         echo "检测到端口 $PORT 被进程 $PIDS 占用，正在强制终止..."
-        kill -9 $PIDS || true
+        kill -9 $PIDS 2>/dev/null || true
     fi
 # 尝试使用 fuser
-elif command -v fuser >/dev/null; then
+elif command -v fuser >/dev/null 2>&1; then
     echo "使用 fuser 清理端口..."
-    fuser -k $PORT/tcp || true
+    fuser -k $PORT/tcp 2>/dev/null || true
 # 尝试使用 netstat 查找并 kill
-elif command -v netstat >/dev/null; then
-    PIDS=$(netstat -nlp | grep :$PORT | awk '{print $7}' | awk -F"/" '{print $1}')
+elif command -v netstat >/dev/null 2>&1; then
+    PIDS=$(netstat -nlp 2>/dev/null | grep :$PORT | awk '{print $7}' | awk -F"/" '{print $1}' || true)
     if [ -n "$PIDS" ]; then
         echo "检测到端口 $PORT 被进程 $PIDS 占用，正在强制终止..."
-        kill -9 $PIDS || true
+        kill -9 $PIDS 2>/dev/null || true
     fi
 fi
 
@@ -91,7 +91,7 @@ sleep 2
 
 # 重启服务
 echo "启动服务..."
-pm2 restart rminte --update-env || pm2 start server/server.js --name rminte
+pm2 restart rminte --update-env 2>/dev/null || pm2 start server/server.js --name rminte
 echo -e "${GREEN}✓ 服务已重启${NC}"
 
 # 5. 检查服务状态
