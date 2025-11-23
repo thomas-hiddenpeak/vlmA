@@ -57,9 +57,41 @@ cd ..
 # 4. 重启 PM2 服务
 echo ""
 echo -e "${YELLOW}步骤 4/6: 重启服务...${NC}"
-# 使用 restart 而不是 reload，避免端口占用问题 (EADDRINUSE)
-# 因为应用是单实例运行且绑定了特定端口，reload 尝试启动新进程时会冲突
-pm2 restart rminte --update-env
+
+# 尝试停止服务
+echo "停止现有服务..."
+pm2 stop rminte || true
+
+# 强制清理端口占用 (防止 EADDRINUSE)
+PORT=43003
+echo "检查端口 $PORT 占用情况..."
+
+# 尝试使用 lsof
+if command -v lsof >/dev/null; then
+    PIDS=$(lsof -t -i:$PORT)
+    if [ -n "$PIDS" ]; then
+        echo "检测到端口 $PORT 被进程 $PIDS 占用，正在强制终止..."
+        kill -9 $PIDS || true
+    fi
+# 尝试使用 fuser
+elif command -v fuser >/dev/null; then
+    echo "使用 fuser 清理端口..."
+    fuser -k $PORT/tcp || true
+# 尝试使用 netstat 查找并 kill
+elif command -v netstat >/dev/null; then
+    PIDS=$(netstat -nlp | grep :$PORT | awk '{print $7}' | awk -F"/" '{print $1}')
+    if [ -n "$PIDS" ]; then
+        echo "检测到端口 $PORT 被进程 $PIDS 占用，正在强制终止..."
+        kill -9 $PIDS || true
+    fi
+fi
+
+# 等待端口释放
+sleep 2
+
+# 重启服务
+echo "启动服务..."
+pm2 restart rminte --update-env || pm2 start server/server.js --name rminte
 echo -e "${GREEN}✓ 服务已重启${NC}"
 
 # 5. 检查服务状态
