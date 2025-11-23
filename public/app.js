@@ -1807,9 +1807,10 @@ function updateTaskDisplay() {
                 📅 ${timestamp}${task.source ? ` • ${task.source}` : ''}
               </div>
               <button onclick="deleteTask(${index})" 
-                      style="padding: 3px 6px; background: #ff6b6b; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.7rem; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; min-width: auto;"
+                      style="width: 24px; height: 24px; padding: 0; background: #ff6b6b; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; flex-shrink: 0; display: flex; align-items: center; justify-content: center;"
                       onmouseover="this.style.background='#ee5a6f'"
-                      onmouseout="this.style.background='#ff6b6b'">删除</button>
+                      onmouseout="this.style.background='#ff6b6b'"
+                      title="删除任务">🗑️</button>
             </div>
           </div>
         </div>
