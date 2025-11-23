@@ -1378,11 +1378,15 @@ async function generateInsight(level, userPrompt, systemPrompt, sourceCount) {
     
     console.log(`✅ ${config.label}洞察 #${currentCount} 生成完成`);
     
-    // 任务提取:小时洞察和每日洞察
-    if (level === 'hour' || level === 'day') {
-      const source = level === 'hour' ? '1小时洞察' : '每日洞察';
-      await extractTasksFromText(fullText, source);
-    }
+    // 任务提取:所有洞察级别
+    const sourceMap = {
+      'minute': '1分钟洞察',
+      'fifteen': '15分钟洞察',
+      'hour': '1小时洞察',
+      'day': '每日洞察'
+    };
+    const source = sourceMap[level] || `${config.label}洞察`;
+    await extractTasksFromText(fullText, source);
     
     // 检查是否需要触发下一级洞察（逐级触发）
     checkNextLevelInsight(level);
