@@ -1,0 +1,26 @@
+{
+  "apps": [
+    {
+      "name": "rminte-webhook",
+      "script": "webhook-server.js",
+      "cwd": "./",
+      "instances": 1,
+      "exec_mode": "fork",
+      "autorestart": true,
+      "watch": false,
+      "max_memory_restart": "100M",
+      "env": {
+        "NODE_ENV": "production",
+        "WEBHOOK_PORT": 43004,
+        "WEBHOOK_SECRET": ""
+      },
+      "error_file": "./logs/webhook-error.log",
+      "out_file": "./logs/webhook-out.log",
+      "log_date_format": "YYYY-MM-DD HH:mm:ss",
+      "merge_logs": true,
+      "min_uptime": "10s",
+      "max_restarts": 10,
+      "restart_delay": 3000
+    }
+  ]
+}
