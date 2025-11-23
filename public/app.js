@@ -935,7 +935,10 @@ async function stopCollectionAndSummarize() {
     
     // 汇总完成后提取任务
     if (summaryText.trim()) {
+      console.log(`[任务提取] 触发历史汇总分析, 内容长度: ${summaryText.length}`);
       await extractTasksFromText(summaryText, '历史汇总分析');
+    } else {
+      console.log(`[任务提取] 跳过历史汇总 - 内容为空`);
     }
     
   } catch (err) {
@@ -1381,7 +1384,10 @@ async function generateInsight(level, userPrompt, systemPrompt, sourceCount) {
     // 任务提取:小时洞察和每日洞察
     if (level === 'hour' || level === 'day') {
       const source = level === 'hour' ? '1小时洞察' : '每日洞察';
+      console.log(`[任务提取] 触发层级: ${level}, 来源: ${source}, 内容长度: ${fullText.length}`);
       await extractTasksFromText(fullText, source);
+    } else {
+      console.log(`[任务提取] 跳过层级: ${level} (仅在 hour/day 层级提取)`);
     }
     
     // 检查是否需要触发下一级洞察（逐级触发）
