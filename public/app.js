@@ -90,6 +90,32 @@ let workDuration = {
   timerInterval: null   // 定时器
 };
 
+// 任务列表
+let taskList = [];
+const TASK_STORAGE_KEY = 'vlmA_task_list';
+
+// 从 localStorage 加载任务列表
+function loadTasks() {
+  try {
+    const saved = localStorage.getItem(TASK_STORAGE_KEY);
+    if (saved) {
+      taskList = JSON.parse(saved);
+      updateTaskDisplay();
+    }
+  } catch (err) {
+    console.error('加载任务列表失败:', err);
+  }
+}
+
+// 保存任务列表到 localStorage
+function saveTasks() {
+  try {
+    localStorage.setItem(TASK_STORAGE_KEY, JSON.stringify(taskList));
+  } catch (err) {
+    console.error('保存任务列表失败:', err);
+  }
+}
+
 // 从 localStorage 加载 token 统计
 function loadTokenStats() {
   try {
@@ -904,6 +930,11 @@ async function stopCollectionAndSummarize() {
     
     console.log('Summary completed. History count:', historyCount);
     
+    // 汇总完成后提取任务
+    if (summaryText.trim()) {
+      await extractTasksFromText(summaryText, '历史汇总分析');
+    }
+    
   } catch (err) {
     console.error('Stop collection error:', err);
     alert('生成汇总失败: ' + err.message);
@@ -1327,6 +1358,12 @@ async function generateInsight(level, userPrompt, systemPrompt, sourceCount) {
     
     console.log(`✅ ${config.label}洞察 #${currentCount} 生成完成`);
     
+    // 任务提取:小时洞察和每日洞察
+    if (level === 'hour' || level === 'day') {
+      const source = level === 'hour' ? '1小时洞察' : '每日洞察';
+      await extractTasksFromText(fullText, source);
+    }
+    
     // 检查是否需要触发下一级洞察（逐级触发）
     checkNextLevelInsight(level);
     
@@ -1455,6 +1492,27 @@ const DEFAULT_CONFIG = {
   analysisPrompt: '请描述这些时序图片中的内容,不要逐个描述，请整体简要描述。',
   insightPrompt: '你是一个专业的信息综合分析专家。你的任务是对已有的信息进行二次总结和提炼，压缩关键信息，识别重要模式。你要处理的信息里面有些信息（可能是本次信息也可能是上一分钟的洞察）可能前后不相关，需要区别整理。',
   summaryPrompt: '请分析以下所有历史观察记录，提供综合洞察和总结：',
+  taskPrompt: `你是一个任务提取助手。请分析以下内容，识别其中需要采取行动的事项，并提取为待办任务。
+
+要求：
+1. 只提取明确需要行动的事项
+2. 每个任务用一行描述，格式：- [ ] 任务描述
+3. 任务描述要简洁明确，包含关键信息
+4. 如果没有明确的待办事项，返回空列表
+5. 不要添加额外的解释或分析
+
+示例输出：
+- [ ] 检查服务器CPU使用率异常问题
+- [ ] 更新API文档中的认证说明
+- [ ] 联系客户确认需求变更`,
+  autoExtractTasks: true,  // 自动提取任务
+  insightPriceInput: 0.002,
+  insightPriceOutput: 0.002,
+  
+  // 提示词配置
+  analysisPrompt: '请描述这些时序图片中的内容,不要逐个描述，请整体简要描述。',
+  insightPrompt: '你是一个专业的信息综合分析专家。你的任务是对已有的信息进行二次总结和提炼，压缩关键信息，识别重要模式。你要处理的信息里面有些信息（可能是本次信息也可能是上一分钟的洞察）可能前后不相关，需要区别整理。',
+  summaryPrompt: '请分析以下所有历史观察记录，提供综合洞察和总结：',
   
   // 参数配置
   interval: 12,
@@ -1507,9 +1565,14 @@ function applyConfig(config) {
   // 提示词配置
   const analysisPromptInput = document.getElementById('analysisPromptInput');
   const insightPromptInput = document.getElementById('insightPromptInput');
+  const taskPromptInput = document.getElementById('taskPromptInput');
+  const autoExtractCheckbox = document.getElementById('autoExtractTasksCheckbox');
+  
   if (config.analysisPrompt && analysisPromptInput) analysisPromptInput.value = config.analysisPrompt;
   if (config.insightPrompt && insightPromptInput) insightPromptInput.value = config.insightPrompt;
   if (config.summaryPrompt) summaryPromptInput.value = config.summaryPrompt;
+  if (config.taskPrompt && taskPromptInput) taskPromptInput.value = config.taskPrompt;
+  if (config.autoExtractTasks !== undefined && autoExtractCheckbox) autoExtractCheckbox.checked = config.autoExtractTasks;
   
   // 参数配置
   if (config.interval) intervalInput.value = config.interval;
@@ -1533,6 +1596,8 @@ function getCurrentConfig() {
   const insightPriceOutputEl = document.getElementById('insightPriceOutput');
   const apiKeyInput = document.getElementById('apiKeyInput');
   const insightApiKeyInput = document.getElementById('insightApiKeyInput');
+  const taskPromptInput = document.getElementById('taskPromptInput');
+  const autoExtractCheckbox = document.getElementById('autoExtractTasksCheckbox');
   
   return {
     // 模型配置
@@ -1553,6 +1618,8 @@ function getCurrentConfig() {
     analysisPrompt: analysisPromptInput ? analysisPromptInput.value.trim() : DEFAULT_CONFIG.analysisPrompt,
     insightPrompt: insightPromptInput ? insightPromptInput.value.trim() : DEFAULT_CONFIG.insightPrompt,
     summaryPrompt: summaryPromptInput.value.trim(),
+    taskPrompt: taskPromptInput ? taskPromptInput.value.trim() : DEFAULT_CONFIG.taskPrompt,
+    autoExtractTasks: autoExtractCheckbox ? autoExtractCheckbox.checked : DEFAULT_CONFIG.autoExtractTasks,
     
     // 参数配置
     interval: parseInt(intervalInput.value) || 12,
@@ -1667,6 +1734,231 @@ window.addEventListener('DOMContentLoaded', () => {
   console.log('正在加载 Token 统计...');
   loadTokenStats();
   
+  // 加载任务列表
+  console.log('正在加载任务列表...');
+  loadTasks();
+  
+  // 绑定任务清空按钮
+  const clearTasksBtn = document.getElementById('clearTasksBtn');
+  if (clearTasksBtn) {
+    clearTasksBtn.addEventListener('click', clearAllTasks);
+  }
+  
   console.log('页面初始化完成');
 });
+
+// ==================== 任务管理功能 ====================
+
+// 更新任务显示
+function updateTaskDisplay() {
+  const taskListEl = document.getElementById('taskList');
+  const taskCountEl = document.getElementById('taskCount');
+  
+  if (!taskListEl || !taskCountEl) return;
+  
+  taskCountEl.textContent = `(${taskList.length})`;
+  
+  if (taskList.length === 0) {
+    taskListEl.innerHTML = `
+      <div style="text-align: center; color: #999; padding: 40px 20px;">
+        <div style="font-size: 3rem; margin-bottom: 10px;">📋</div>
+        <div>暂无任务</div>
+        <div style="font-size: 0.85rem; margin-top: 8px;">任务将从汇总和洞察中自动提取</div>
+      </div>
+    `;
+    return;
+  }
+  
+  const tasksHTML = taskList.map((task, index) => {
+    const timestamp = new Date(task.timestamp).toLocaleString('zh-CN');
+    const checkedClass = task.completed ? 'style="text-decoration: line-through; opacity: 0.6;"' : '';
+    
+    return `
+      <div class="task-item" style="padding: 12px; background: white; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid ${task.completed ? '#999' : '#667eea'}; transition: all 0.3s;">
+        <div style="display: flex; align-items: start; gap: 10px;">
+          <input type="checkbox" 
+                 ${task.completed ? 'checked' : ''} 
+                 onchange="toggleTaskComplete(${index})"
+                 style="margin-top: 4px; cursor: pointer; width: 18px; height: 18px;">
+          <div style="flex: 1;">
+            <div ${checkedClass} style="font-size: 0.9rem; color: #333; line-height: 1.5; margin-bottom: 6px;">
+              ${escapeHtml(task.description)}
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="font-size: 0.75rem; color: #999;">
+                📅 ${timestamp}
+                ${task.source ? ` • 来源: ${task.source}` : ''}
+              </div>
+              <button onclick="deleteTask(${index})" 
+                      style="padding: 4px 8px; background: #ff6b6b; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.7rem; transition: all 0.2s;"
+                      onmouseover="this.style.background='#ee5a6f'"
+                      onmouseout="this.style.background='#ff6b6b'">删除</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  taskListEl.innerHTML = tasksHTML;
+}
+
+// HTML 转义函数
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// 切换任务完成状态
+function toggleTaskComplete(index) {
+  if (index >= 0 && index < taskList.length) {
+    taskList[index].completed = !taskList[index].completed;
+    saveTasks();
+    updateTaskDisplay();
+  }
+}
+
+// 删除任务
+function deleteTask(index) {
+  if (index >= 0 && index < taskList.length) {
+    if (confirm('确定要删除这个任务吗？')) {
+      taskList.splice(index, 1);
+      saveTasks();
+      updateTaskDisplay();
+    }
+  }
+}
+
+// 清空所有任务
+function clearAllTasks() {
+  if (taskList.length === 0) {
+    showSaveNotification('⚠️ 任务列表已经是空的');
+    return;
+  }
+  
+  if (confirm('确定要清空所有任务吗？')) {
+    taskList = [];
+    saveTasks();
+    updateTaskDisplay();
+    showSaveNotification('✅ 所有任务已清空');
+  }
+}
+
+// 从文本中提取任务
+async function extractTasksFromText(content, source = '未知') {
+  try {
+    const taskPromptInput = document.getElementById('taskPromptInput');
+    const autoExtractCheckbox = document.getElementById('autoExtractTasksCheckbox');
+    
+    // 检查是否启用自动提取
+    if (!autoExtractCheckbox || !autoExtractCheckbox.checked) {
+      console.log('自动任务提取已禁用');
+      return [];
+    }
+    
+    const taskPrompt = taskPromptInput ? taskPromptInput.value.trim() : DEFAULT_CONFIG.taskPrompt;
+    
+    if (!taskPrompt) {
+      console.error('任务提取提示词为空');
+      return [];
+    }
+    
+    console.log(`正在从${source}提取任务...`);
+    
+    // 调用洞察 API 提取任务
+    const insightApiKeyInput = document.getElementById('insightApiKeyInput');
+    const insightApiKey = insightApiKeyInput ? insightApiKeyInput.value.trim() : '';
+    
+    const requestHeaders = { 'Content-Type': 'application/json' };
+    if (insightApiKey) {
+      requestHeaders['Authorization'] = `Bearer ${insightApiKey}`;
+    }
+    
+    const requestBody = {
+      model: insightModelInput.value || 'RM-01 LLM',
+      messages: [
+        {
+          role: 'system',
+          content: taskPrompt
+        },
+        {
+          role: 'user',
+          content: content
+        }
+      ],
+      temperature: 0.3,
+      stream: false
+    };
+    
+    const resp = await fetch(insightApiUrlInput.value, {
+      method: 'POST',
+      headers: requestHeaders,
+      body: JSON.stringify(requestBody)
+    });
+    
+    if (!resp.ok) {
+      throw new Error(`HTTP error! status: ${resp.status}`);
+    }
+    
+    const result = await resp.json();
+    const responseText = result.choices?.[0]?.message?.content || '';
+    
+    // 解析任务列表
+    const tasks = parseTasksFromResponse(responseText);
+    
+    if (tasks.length > 0) {
+      console.log(`从${source}提取到 ${tasks.length} 个任务`);
+      
+      // 添加任务到列表
+      tasks.forEach(description => {
+        taskList.push({
+          description: description,
+          completed: false,
+          timestamp: new Date().toISOString(),
+          source: source
+        });
+      });
+      
+      saveTasks();
+      updateTaskDisplay();
+      
+      showSaveNotification(`✅ 从${source}提取了 ${tasks.length} 个新任务`);
+    } else {
+      console.log(`从${source}未提取到任务`);
+    }
+    
+    return tasks;
+  } catch (err) {
+    console.error('提取任务失败:', err);
+    return [];
+  }
+}
+
+// 从响应文本中解析任务列表
+function parseTasksFromResponse(text) {
+  const tasks = [];
+  const lines = text.split('\n');
+  
+  for (const line of lines) {
+    const trimmed = line.trim();
+    // 匹配 "- [ ] 任务描述" 格式
+    const match = trimmed.match(/^-\s*\[\s*\]\s*(.+)$/);
+    if (match && match[1]) {
+      const taskDesc = match[1].trim();
+      if (taskDesc && !tasks.includes(taskDesc)) {
+        tasks.push(taskDesc);
+      }
+    }
+  }
+  
+  return tasks;
+}
+
+// 暴露函数到全局
+window.toggleTaskComplete = toggleTaskComplete;
+window.deleteTask = deleteTask;
+window.clearAllTasks = clearAllTasks;
+window.extractTasksFromText = extractTasksFromText;
+
 
