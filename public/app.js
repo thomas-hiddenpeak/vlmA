@@ -1803,12 +1803,12 @@ function updateTaskDisplay() {
               ${escapeHtml(task.description)}
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div style="font-size: 0.75rem; color: #999;">
+              <div style="font-size: 0.75rem; color: #999; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                 📅 ${timestamp}
                 ${task.source ? ` • 来源: ${task.source}` : ''}
               </div>
               <button onclick="deleteTask(${index})" 
-                      style="padding: 4px 8px; background: #ff6b6b; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.7rem; transition: all 0.2s;"
+                      style="padding: 4px 8px; background: #ff6b6b; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.7rem; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; margin-left: 8px;"
                       onmouseover="this.style.background='#ee5a6f'"
                       onmouseout="this.style.background='#ff6b6b'">删除</button>
             </div>
