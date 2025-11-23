@@ -250,6 +250,18 @@
       flex: 1;
       min-width: 200px;
     }
+
+    @media (max-width: 768px) {
+      #customPrompt {
+        min-width: 0;
+        width: 100%;
+      }
+      
+      .main-content > div {
+        min-width: 0; /* 允许 flex/grid 子项收缩 */
+        width: 100%;
+      }
+    }
     
     .status-indicator {
       display: flex;
