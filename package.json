@@ -46,17 +46,21 @@
     "files": [
       "src/**/*",
       "public/**/*",
-      "server/**/*",
-      "!server/node_modules/.bin",
       "favicon_io/**/*",
       "assets/**/*",
       "!**/*.md",
       "!.github",
       "!assets/source"
     ],
+    "extraResources": [
+      {
+        "from": "server",
+        "to": "server",
+        "filter": ["**/*", "!server-local.log", "!server-local.pid"]
+      }
+    ],
     "asarUnpack": [
-      "server/**/*",
-      "server/node_modules/**/*"
+      "server/**/*"
     ],
     "mac": {
       "icon": "favicon_io/android-chrome-512x512.png",

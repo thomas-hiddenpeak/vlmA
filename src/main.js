@@ -184,16 +184,10 @@ function startBackendServer() {
     let serverPath, serverDir;
     
     if (app.isPackaged) {
-      // 生产环境：从 asar.unpacked 或 resources 目录加载
+      // 生产环境：从 resources 目录加载（使用 extraResources 配置）
       const resourcesPath = process.resourcesPath;
-      serverPath = path.join(resourcesPath, 'app.asar.unpacked', 'server', 'server.js');
-      serverDir = path.join(resourcesPath, 'app.asar.unpacked', 'server');
-      
-      // 如果 asar.unpacked 不存在，尝试直接从 resources
-      if (!require('fs').existsSync(serverPath)) {
-        serverPath = path.join(resourcesPath, 'server', 'server.js');
-        serverDir = path.join(resourcesPath, 'server');
-      }
+      serverPath = path.join(resourcesPath, 'server', 'server.js');
+      serverDir = path.join(resourcesPath, 'server');
     } else {
       // 开发环境
       serverPath = path.join(__dirname, '..', 'server', 'server.js');
@@ -236,17 +230,8 @@ function startBackendServer() {
     
     let resolved = false;
     
-    // 在主进程中直接加载后端服务器模块（避免 spawn 造成递归启动）
+    // 直接使用子进程启动 node（推荐方式）
     try {
-      // 将 serverPath 用作 require 的路径（server 目录已配置为 asarUnpack）
-      require(serverPath);
-      log('[Backend] 已在主进程中加载 server.js');
-      resolved = true;
-      resolve();
-    } catch (e) {
-      log('[Backend Error] require server failed: ' + (e && e.message ? e.message : e));
-      // 仍然尝试用子进程启动 node（作为兜底），但避免使用 process.execPath（会启动 electron 本体）
-      try {
         // 尝试查找系统上的 node 可执行路径，避免 spawn ENOENT
         let nodeExe = null;
         try {
@@ -260,9 +245,13 @@ function startBackendServer() {
           throw new Error('系统未找到 node，可尝试安装 Node.js 或确保 PATH 包含 node');
         }
 
+        log('[Backend] 使用 node 启动: ' + nodeExe);
+        log('[Backend] 服务器路径: ' + serverPath);
+        log('[Backend] 工作目录: ' + serverDir);
+
         backendProcess = spawn(nodeExe, [serverPath], {
           cwd: serverDir,
-          env: { ...process.env, NODE_ENV: 'production' },
+          env: { ...process.env, NODE_ENV: 'production', PORT: String(BACKEND_PORT) },
           stdio: ['pipe', 'pipe', 'pipe']
         });
 
@@ -299,6 +288,16 @@ function startBackendServer() {
             reject(new Error(`后端服务器异常退出，代码: ${code}`));
           }
         });
+        
+        // 如果5秒后还没有resolved，也算成功（后端可能正常启动但没有输出预期的日志）
+        setTimeout(() => {
+          if (!resolved) {
+            log('[Backend] 超时检测: 假设后端已启动');
+            resolved = true;
+            resolve();
+          }
+        }, 5000);
+        
       } catch (err) {
         log('后端启动最终失败: ' + (err && err.message ? err.message : err));
         if (!resolved) {
@@ -306,7 +305,6 @@ function startBackendServer() {
           reject(err);
         }
       }
-    }
   });
 }
 
