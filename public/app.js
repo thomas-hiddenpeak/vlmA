@@ -2152,6 +2152,61 @@ async function autoSyncHistory() {
 // 暴露下载函数到全局
 window.downloadHistory = downloadHistory;
 
+// WebSocket 连接用于接收服务器命令
+let controlWs = null;
+
+function connectControlWebSocket() {
+  try {
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'localhost:43003'
+      : window.location.host;
+    const wsUrl = `${wsProtocol}//${wsHost}`;
+    
+    controlWs = new WebSocket(wsUrl);
+    
+    controlWs.onopen = () => {
+      console.log('[控制WebSocket] 已连接到服务器');
+    };
+    
+    controlWs.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('[控制WebSocket] 收到消息:', data);
+        
+        if (data.type === 'start_analysis') {
+          console.log('[API触发] 开始分析');
+          // 模拟点击开始按钮
+          if (!isAnalyzing && toggleAnalysisBtn && !toggleAnalysisBtn.disabled) {
+            toggleAnalysisBtn.click();
+          }
+        } else if (data.type === 'stop_analysis') {
+          console.log('[API触发] 停止分析');
+          // 模拟点击停止按钮
+          if (isAnalyzing && toggleAnalysisBtn && !toggleAnalysisBtn.disabled) {
+            toggleAnalysisBtn.click();
+          }
+        }
+      } catch (err) {
+        console.error('[控制WebSocket] 消息解析失败:', err);
+      }
+    };
+    
+    controlWs.onerror = (error) => {
+      console.error('[控制WebSocket] 错误:', error);
+    };
+    
+    controlWs.onclose = () => {
+      console.log('[控制WebSocket] 连接已关闭，5秒后重连...');
+      setTimeout(connectControlWebSocket, 5000);
+    };
+    
+  } catch (err) {
+    console.error('[控制WebSocket] 连接失败:', err);
+    setTimeout(connectControlWebSocket, 5000);
+  }
+}
+
 // 初始化检查
 document.addEventListener('DOMContentLoaded', () => {
   console.log('[初始化检查] 洞察配置元素:');
@@ -2159,6 +2214,9 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('  hourIntervalInput:', hourIntervalInput, 'value:', hourIntervalInput?.value);
   console.log('  dayIntervalInput:', dayIntervalInput, 'value:', dayIntervalInput?.value);
   console.log('  insightIntervalInput:', insightIntervalInput, 'value:', insightIntervalInput?.value);
+  
+  // 连接控制WebSocket
+  connectControlWebSocket();
 });
 
 

@@ -545,6 +545,62 @@ app.get('/history/export', (req, res) => {
   }
 });
 
+// API: 开始分析与采集 (触发前端UI操作)
+app.post('/api/start-analysis', (req, res) => {
+  try {
+    console.log(`[${new Date().toISOString()}] API: Start analysis triggered`);
+    
+    // 广播消息给所有连接的WebSocket客户端
+    if (wss) {
+      wss.clients.forEach(client => {
+        if (client.readyState === 1) { // WebSocket.OPEN
+          client.send(JSON.stringify({
+            type: 'start_analysis',
+            timestamp: new Date().toISOString()
+          }));
+        }
+      });
+    }
+    
+    res.json({ 
+      status: 'triggered',
+      message: 'Start analysis command sent to all clients',
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error('Start analysis API error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// API: 停止分析与采集 (触发前端UI操作)
+app.post('/api/stop-analysis', (req, res) => {
+  try {
+    console.log(`[${new Date().toISOString()}] API: Stop analysis triggered`);
+    
+    // 广播消息给所有连接的WebSocket客户端
+    if (wss) {
+      wss.clients.forEach(client => {
+        if (client.readyState === 1) { // WebSocket.OPEN
+          client.send(JSON.stringify({
+            type: 'stop_analysis',
+            timestamp: new Date().toISOString()
+          }));
+        }
+      });
+    }
+    
+    res.json({ 
+      status: 'triggered',
+      message: 'Stop analysis command sent to all clients',
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error('Stop analysis API error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 启动/停止视频流采集
 app.post('/camera/start', (req, res) => {
   try {
