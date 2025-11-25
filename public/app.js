@@ -780,6 +780,9 @@ async function sendFramesForAnalysis() {
       frameCount: framesWithTimestamps.length
     });
     
+    // 自动同步到服务器
+    autoSyncHistory();
+    
     // 检查是否需要自动生成洞察
     checkAndGenerateInsight();
     
@@ -940,6 +943,9 @@ async function stopCollectionAndSummarize() {
     } else {
       console.log(`[任务提取] 跳过历史汇总 - 内容为空`);
     }
+    
+    // 自动同步到服务器
+    autoSyncHistory();
     
   } catch (err) {
     console.error('Stop collection error:', err);
@@ -1380,6 +1386,9 @@ async function generateInsight(level, userPrompt, systemPrompt, sourceCount) {
     });
     
     console.log(`✅ ${config.label}洞察 #${currentCount} 生成完成`);
+    
+    // 自动同步到服务器
+    autoSyncHistory();
     
     // 任务提取:小时洞察和每日洞察
     if (level === 'hour' || level === 'day') {
@@ -2097,6 +2106,46 @@ function formatDuration(seconds) {
     return `${minutes}分${secs}秒`;
   } else {
     return `${secs}秒`;
+  }
+}
+
+// 自动同步历史数据到服务器
+async function autoSyncHistory() {
+  try {
+    const exportData = {
+      exportTime: new Date().toISOString(),
+      exportTimeLocal: new Date().toLocaleString('zh-CN'),
+      totalAnalysis: analysisHistory.length,
+      summary: {
+        content: document.getElementById('summaryResult')?.textContent || '',
+        historyCount: historyCount,
+        timestamp: document.getElementById('summaryTimestamp')?.textContent || ''
+      },
+      analysisHistory: analysisHistory,
+      insights: {
+        minute: insightLevels.minute,
+        fifteen: insightLevels.fifteen,
+        hour: insightLevels.hour,
+        day: insightLevels.day
+      },
+      insightCounts: insightCounts,
+      tasks: taskList,
+      tokenStats: tokenStats,
+      workDuration: {
+        totalSeconds: workDuration.totalSeconds,
+        formatted: formatDuration(workDuration.totalSeconds)
+      }
+    };
+    
+    await fetch(`${API_BASE_URL}/history/sync`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(exportData)
+    });
+    
+    console.log(`[自动同步] 历史数据已同步到服务器 (${analysisHistory.length}条记录)`);
+  } catch (err) {
+    console.warn('[自动同步] 同步失败:', err);
   }
 }
 
