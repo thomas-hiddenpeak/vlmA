@@ -34,6 +34,11 @@
   - [PM2 部署（推荐）](#pm2-部署推荐)
   - [自动更新部署](#自动更新部署)
   - [Docker 部署（可选）](#docker-部署可选)
+- [API 接口](#api-接口)
+  - [控制接口](#-控制接口)
+  - [数据接口](#-数据接口)
+  - [WebSocket 实时通信](#-websocket-实时通信)
+  - [API 集成示例](#-api-集成示例)
 - [技术架构](#技术架构)
   - [前端技术栈](#前端技术栈)
   - [后端技术栈](#后端技术栈)
@@ -457,6 +462,205 @@ vlmA/
 PORT=4000 npm start
 
 # 在 server.js 中可配置默认的模型 API 地址
+```
+
+## API 接口
+
+RMinte 提供完整的 RESTful API 接口，支持远程控制和数据导出。
+
+### 🎮 控制接口
+
+#### 开始分析与采集
+```bash
+POST /api/start-analysis
+
+# 示例
+curl -X POST https://vlma.xapp.aoseo.com/api/start-analysis
+```
+
+**功能说明：**
+- 远程触发分析任务启动
+- 通过 WebSocket 实时同步 UI 状态
+- 效果等同于在界面上点击"开始分析"按钮
+- 支持多客户端同步控制
+
+**响应示例：**
+```json
+{
+  "status": "triggered",
+  "message": "Start analysis command sent to all clients",
+  "timestamp": "2025-11-26T01:40:41.478Z"
+}
+```
+
+#### 停止分析与采集
+```bash
+POST /api/stop-analysis
+
+# 示例
+curl -X POST https://vlma.xapp.aoseo.com/api/stop-analysis
+```
+
+**功能说明：**
+- 远程停止分析任务
+- 自动生成历史汇总
+- 触发任务提取
+- UI 实时同步更新
+
+### 📊 数据接口
+
+#### 同步历史数据
+```bash
+POST /history/sync
+Content-Type: application/json
+
+# 示例
+curl -X POST https://vlma.xapp.aoseo.com/history/sync \
+  -H "Content-Type: application/json" \
+  -d @history-data.json
+```
+
+**功能说明：**
+- 将客户端历史数据同步到服务器
+- 前端每次分析/洞察/汇总后自动调用
+- 支持手动批量上传
+
+#### 导出历史数据
+```bash
+GET /history/export
+
+# 下载完整历史数据
+curl https://vlma.xapp.aoseo.com/history/export > history.json
+
+# 查看数据结构
+curl https://vlma.xapp.aoseo.com/history/export | jq .
+```
+
+**响应数据结构：**
+```json
+{
+  "exportTime": "2025-11-26T01:40:41.478Z",
+  "exportTimeLocal": "2025/11/26 09:40:41",
+  "lastUpdate": "2025-11-26T01:35:20.123Z",
+  "totalAnalysis": 156,
+  "summary": {
+    "content": "历史汇总内容...",
+    "historyCount": 156,
+    "timestamp": "2025/11/26 09:35:20"
+  },
+  "analysisHistory": [
+    {
+      "timestamp": "2025-11-26T01:30:15.456Z",
+      "frameTimeRange": "09:30:12 - 09:30:15",
+      "content": "分析内容...",
+      "frameCount": 4
+    }
+  ],
+  "insights": {
+    "minute": [...],    // 60秒洞察记录
+    "fifteen": [...],   // 15分钟洞察记录
+    "hour": [...],      // 1小时洞察记录
+    "day": [...]        // 每日洞察记录
+  },
+  "insightCounts": {
+    "minute": 12,
+    "fifteen": 3,
+    "hour": 1,
+    "day": 0
+  },
+  "tasks": [
+    {
+      "description": "任务描述",
+      "completed": false,
+      "timestamp": "2025-11-26T01:35:20.123Z",
+      "source": "1小时洞察"
+    }
+  ],
+  "tokenStats": {
+    "analysis": { "input": 156000, "output": 12000, "total": 168000 },
+    "insight": { "input": 45000, "output": 8000, "total": 53000 }
+  },
+  "workDuration": {
+    "totalSeconds": 3600,
+    "formatted": "1小时0分0秒"
+  }
+}
+```
+
+### 🔄 WebSocket 实时通信
+
+**连接地址：**
+```
+ws://localhost:43003        # 本地开发
+wss://vlma.xapp.aoseo.com   # 生产环境
+```
+
+**消息格式：**
+```json
+{
+  "type": "start_analysis",  // 或 "stop_analysis"
+  "timestamp": "2025-11-26T01:40:41.478Z"
+}
+```
+
+**特性：**
+- ✅ 自动重连（断开后5秒重试）
+- ✅ 多客户端广播
+- ✅ 实时状态同步
+- ✅ 零延迟UI更新
+
+### 🛠️ API 集成示例
+
+#### Python 示例
+```python
+import requests
+import json
+
+BASE_URL = "https://vlma.xapp.aoseo.com"
+
+# 开始分析
+response = requests.post(f"{BASE_URL}/api/start-analysis")
+print(response.json())
+
+# 等待一段时间后停止
+import time
+time.sleep(300)  # 5分钟
+
+response = requests.post(f"{BASE_URL}/api/stop-analysis")
+print(response.json())
+
+# 导出历史数据
+history = requests.get(f"{BASE_URL}/history/export").json()
+print(f"分析记录数: {history['totalAnalysis']}")
+print(f"任务数: {len(history['tasks'])}")
+
+# 保存到文件
+with open('history.json', 'w', encoding='utf-8') as f:
+    json.dump(history, f, ensure_ascii=False, indent=2)
+```
+
+#### Shell 脚本示例
+```bash
+#!/bin/bash
+
+BASE_URL="https://vlma.xapp.aoseo.com"
+
+# 定时采集任务
+echo "开始5分钟采集..."
+curl -X POST $BASE_URL/api/start-analysis
+
+sleep 300
+
+echo "停止采集并导出数据..."
+curl -X POST $BASE_URL/api/stop-analysis
+
+# 等待汇总生成
+sleep 10
+
+# 下载数据
+FILENAME="history-$(date +%Y%m%d-%H%M%S).json"
+curl $BASE_URL/history/export > $FILENAME
+echo "数据已保存到 $FILENAME"
 ```
 
 ## API 兼容性
