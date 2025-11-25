@@ -2013,7 +2013,7 @@ window.clearAllTasks = clearAllTasks;
 window.extractTasksFromText = extractTasksFromText;
 
 // 下载历史分析数据
-function downloadHistory() {
+async function downloadHistory() {
   try {
     // 构建导出数据
     const exportData = {
@@ -2040,6 +2040,19 @@ function downloadHistory() {
         formatted: formatDuration(workDuration.totalSeconds)
       }
     };
+    
+    // 同步数据到服务器
+    try {
+      await fetch(`${API_BASE_URL}/history/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(exportData)
+      });
+      console.log('历史数据已同步到服务器');
+    } catch (syncErr) {
+      console.warn('同步到服务器失败:', syncErr);
+      // 继续下载流程,不影响本地下载
+    }
     
     // 转换为JSON字符串
     const jsonStr = JSON.stringify(exportData, null, 2);

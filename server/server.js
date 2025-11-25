@@ -471,6 +471,80 @@ app.post('/collection/config', (req, res) => {
   }
 });
 
+// 全局历史数据存储
+let globalHistoryData = {
+  lastUpdate: null,
+  analysisHistory: [],
+  insights: {
+    minute: [],
+    fifteen: [],
+    hour: [],
+    day: []
+  },
+  summary: null,
+  tasks: [],
+  tokenStats: null,
+  workDuration: null
+};
+
+// 同步客户端历史数据到服务器
+app.post('/history/sync', (req, res) => {
+  try {
+    const historyData = req.body;
+    
+    // 更新全局历史数据
+    globalHistoryData = {
+      lastUpdate: new Date().toISOString(),
+      analysisHistory: historyData.analysisHistory || [],
+      insights: historyData.insights || { minute: [], fifteen: [], hour: [], day: [] },
+      summary: historyData.summary || null,
+      tasks: historyData.tasks || [],
+      tokenStats: historyData.tokenStats || null,
+      workDuration: historyData.workDuration || null
+    };
+    
+    console.log(`[${new Date().toISOString()}] History data synced: ${globalHistoryData.analysisHistory.length} analysis records`);
+    
+    res.json({
+      status: 'synced',
+      recordCount: globalHistoryData.analysisHistory.length,
+      timestamp: globalHistoryData.lastUpdate
+    });
+  } catch (err) {
+    console.error('History sync error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 获取历史数据 (API接口)
+app.get('/history/export', (req, res) => {
+  try {
+    const exportData = {
+      exportTime: new Date().toISOString(),
+      exportTimeLocal: new Date().toLocaleString('zh-CN'),
+      lastUpdate: globalHistoryData.lastUpdate,
+      totalAnalysis: globalHistoryData.analysisHistory.length,
+      summary: globalHistoryData.summary,
+      analysisHistory: globalHistoryData.analysisHistory,
+      insights: globalHistoryData.insights,
+      insightCounts: {
+        minute: globalHistoryData.insights.minute.length,
+        fifteen: globalHistoryData.insights.fifteen.length,
+        hour: globalHistoryData.insights.hour.length,
+        day: globalHistoryData.insights.day.length
+      },
+      tasks: globalHistoryData.tasks,
+      tokenStats: globalHistoryData.tokenStats,
+      workDuration: globalHistoryData.workDuration
+    };
+    
+    res.json(exportData);
+  } catch (err) {
+    console.error('History export error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 启动/停止视频流采集
 app.post('/camera/start', (req, res) => {
   try {
