@@ -475,7 +475,7 @@ RMinte 提供完整的 RESTful API 接口，支持远程控制和数据导出。
 POST /api/start-analysis
 
 # 示例
-curl -X POST https://vlma.xapp.aoseo.com/api/start-analysis
+curl -X POST http://localhost:43003/api/start-analysis
 ```
 
 **功能说明：**
@@ -498,7 +498,7 @@ curl -X POST https://vlma.xapp.aoseo.com/api/start-analysis
 POST /api/stop-analysis
 
 # 示例
-curl -X POST https://vlma.xapp.aoseo.com/api/stop-analysis
+curl -X POST http://localhost:43003/api/stop-analysis
 ```
 
 **功能说明：**
@@ -515,7 +515,7 @@ POST /history/sync
 Content-Type: application/json
 
 # 示例
-curl -X POST https://vlma.xapp.aoseo.com/history/sync \
+curl -X POST http://localhost:43003/history/sync \
   -H "Content-Type: application/json" \
   -d @history-data.json
 ```
@@ -530,10 +530,10 @@ curl -X POST https://vlma.xapp.aoseo.com/history/sync \
 GET /history/export
 
 # 下载完整历史数据
-curl https://vlma.xapp.aoseo.com/history/export > history.json
+curl http://localhost:43003/history/export > history.json
 
 # 查看数据结构
-curl https://vlma.xapp.aoseo.com/history/export | jq .
+curl http://localhost:43003/history/export | jq .
 ```
 
 **响应数据结构：**
@@ -591,8 +591,7 @@ curl https://vlma.xapp.aoseo.com/history/export | jq .
 
 **连接地址：**
 ```
-ws://localhost:43003        # 本地开发
-wss://vlma.xapp.aoseo.com   # 生产环境
+ws://localhost:43003
 ```
 
 **消息格式：**
@@ -616,7 +615,7 @@ wss://vlma.xapp.aoseo.com   # 生产环境
 import requests
 import json
 
-BASE_URL = "https://vlma.xapp.aoseo.com"
+BASE_URL = "http://localhost:43003"
 
 # 开始分析
 response = requests.post(f"{BASE_URL}/api/start-analysis")
@@ -643,7 +642,7 @@ with open('history.json', 'w', encoding='utf-8') as f:
 ```bash
 #!/bin/bash
 
-BASE_URL="https://vlma.xapp.aoseo.com"
+BASE_URL="http://localhost:43003"
 
 # 定时采集任务
 echo "开始5分钟采集..."
