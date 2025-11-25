@@ -1379,7 +1379,10 @@
       <div style="display: flex; flex-direction: column; gap: 20px;">
         <!-- 汇总分析结果卡片 -->
         <div class="card mobile-tab-insight" id="summaryCard" style="display: none;">
-          <div class="card-title">📊 历史汇总分析</div>
+          <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>📊 历史汇总分析</span>
+            <button onclick="downloadHistory()" style="padding: 6px 12px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.3s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'" title="下载所有分析历史">📥 下载</button>
+          </div>
           <div style="padding: 12px; background: #f8f9fa; border-radius: 8px; margin-bottom: 12px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
               <span style="font-size: 0.85rem; color: #666;">采集条目: <strong id="summaryHistoryCount">0</strong></span>

@@ -2012,6 +2012,84 @@ window.deleteTask = deleteTask;
 window.clearAllTasks = clearAllTasks;
 window.extractTasksFromText = extractTasksFromText;
 
+// 下载历史分析数据
+function downloadHistory() {
+  try {
+    // 构建导出数据
+    const exportData = {
+      exportTime: new Date().toISOString(),
+      exportTimeLocal: new Date().toLocaleString('zh-CN'),
+      totalAnalysis: analysisHistory.length,
+      summary: {
+        content: document.getElementById('summaryResult')?.textContent || '',
+        historyCount: historyCount,
+        timestamp: document.getElementById('summaryTimestamp')?.textContent || ''
+      },
+      analysisHistory: analysisHistory,
+      insights: {
+        minute: insightLevels.minute,
+        fifteen: insightLevels.fifteen,
+        hour: insightLevels.hour,
+        day: insightLevels.day
+      },
+      insightCounts: insightCounts,
+      tasks: taskList,
+      tokenStats: tokenStats,
+      workDuration: {
+        totalSeconds: workDuration.totalSeconds,
+        formatted: formatDuration(workDuration.totalSeconds)
+      }
+    };
+    
+    // 转换为JSON字符串
+    const jsonStr = JSON.stringify(exportData, null, 2);
+    
+    // 创建Blob
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    
+    // 创建下载链接
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    
+    // 文件名包含时间戳
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+    a.download = `vlmA-history-${timestamp}.json`;
+    
+    // 触发下载
+    document.body.appendChild(a);
+    a.click();
+    
+    // 清理
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showSaveNotification('✅ 历史数据已导出');
+    
+  } catch (err) {
+    console.error('导出历史数据失败:', err);
+    alert('导出失败: ' + err.message);
+  }
+}
+
+// 格式化时长
+function formatDuration(seconds) {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  
+  if (hours > 0) {
+    return `${hours}小时${minutes}分${secs}秒`;
+  } else if (minutes > 0) {
+    return `${minutes}分${secs}秒`;
+  } else {
+    return `${secs}秒`;
+  }
+}
+
+// 暴露下载函数到全局
+window.downloadHistory = downloadHistory;
+
 // 初始化检查
 document.addEventListener('DOMContentLoaded', () => {
   console.log('[初始化检查] 洞察配置元素:');
