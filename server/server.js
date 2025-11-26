@@ -25,8 +25,8 @@ let wss = null;
 
 // 摄像头配置（根据操作系统调整）
 const webcamOpts = {
-  width: 640,
-  height: 480,
+  width: 1920,
+  height: 1080,
   quality: 70,
   delay: 0,
   saveShots: true,

@@ -308,9 +308,13 @@ async function startVideoStream() {
   try {
     // 使用浏览器本地摄像头（UVC）作为信号源
     const selectedDevice = deviceSelect.value;
+    const resolutionSelect = document.getElementById('resolutionSelect');
+    const selectedResolution = resolutionSelect ? resolutionSelect.value : '1920x1080';
+    const [width, height] = selectedResolution.split('x').map(Number);
+    
     const constraints = (selectedDevice && selectedDevice !== 'default')
-      ? { video: { deviceId: { exact: selectedDevice } }, audio: false }
-      : { video: true, audio: false };
+      ? { video: { deviceId: { exact: selectedDevice }, width: { ideal: width }, height: { ideal: height } }, audio: false }
+      : { video: { width: { ideal: width }, height: { ideal: height } }, audio: false };
 
     // 停止已有流（如果存在）
     if (stream) {
@@ -326,8 +330,8 @@ async function startVideoStream() {
     if (localCaptureTimer) clearInterval(localCaptureTimer);
     localCaptureTimer = setInterval(() => {
       try {
-        const w = video.videoWidth || 640;
-        const h = video.videoHeight || 480;
+        const w = video.videoWidth || 1920;
+        const h = video.videoHeight || 1080;
         captureCanvas.width = w;
         captureCanvas.height = h;
         captureCtx.drawImage(video, 0, 0, w, h);
@@ -997,6 +1001,17 @@ refreshDevicesBtn.addEventListener('click', () => {
     refreshDevicesBtn.disabled = false;
   }, 1000);
 });
+
+// 分辨率选择器变化时重启视频流
+const resolutionSelect = document.getElementById('resolutionSelect');
+if (resolutionSelect) {
+  resolutionSelect.addEventListener('change', async () => {
+    if (isStreamActive) {
+      console.log('分辨率已更改，重启视频流...');
+      await startVideoStream();
+    }
+  });
+}
 
 // 如果页面被关闭，停止视频流
 window.addEventListener('beforeunload', () => {
