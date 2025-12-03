@@ -408,12 +408,47 @@ app.post('/collection/stop', async (req, res) => {
       responseType: 'stream'
     });
     
-    // 转发流式响应
+    // 收集汇总内容用于保存到 globalHistoryData
+    let summaryContent = '';
+    
+    // 转发流式响应并收集内容
     resp.data.on('data', (chunk) => {
       res.write(chunk);
+      
+      // 解析流数据收集汇总内容
+      const chunkStr = chunk.toString();
+      const lines = chunkStr.split('\n');
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const jsonStr = line.slice(6).trim();
+            if (jsonStr === '[DONE]') continue;
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              summaryContent += content;
+            }
+          } catch (e) {
+            // 忽略解析错误
+          }
+        }
+      }
     });
     
     resp.data.on('end', () => {
+      // 汇总完成后更新 globalHistoryData
+      globalHistoryData.summary = {
+        content: summaryContent,
+        historyCount: historyCount,
+        timestamp: new Date().toLocaleString('zh-CN')
+      };
+      globalHistoryData.analysisHistory = historySnapshot;
+      globalHistoryData.totalAnalysis = historyCount;
+      globalHistoryData.exportTime = new Date().toISOString();
+      globalHistoryData.exportTimeLocal = new Date().toLocaleString('zh-CN');
+      
+      console.log(`[${new Date().toISOString()}] Summary saved to globalHistoryData (${summaryContent.length} chars)`);
+      
       res.end();
     });
     

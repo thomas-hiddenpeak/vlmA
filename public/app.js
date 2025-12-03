@@ -2132,7 +2132,7 @@ async function autoSyncHistory() {
       exportTimeLocal: new Date().toLocaleString('zh-CN'),
       totalAnalysis: analysisHistory.length,
       summary: {
-        content: document.getElementById('summaryResult')?.textContent || '',
+        content: summaryText || '',  // 使用本地变量而不是DOM
         historyCount: historyCount,
         timestamp: document.getElementById('summaryTimestamp')?.textContent || ''
       },
