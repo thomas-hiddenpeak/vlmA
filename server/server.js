@@ -280,6 +280,13 @@ app.post('/analyze', uploadMiddleware, async (req, res) => {
           prompt: userPrompt,
           response: fullResponse.trim()
         });
+        
+        // 实时更新 globalHistoryData
+        globalHistoryData.analysisHistory = [...analysisHistory];
+        globalHistoryData.totalAnalysis = analysisHistory.length;
+        globalHistoryData.exportTime = new Date().toISOString();
+        globalHistoryData.exportTimeLocal = new Date().toLocaleString('zh-CN');
+        
         console.log(`[${new Date().toISOString()}] Saved analysis to history. Total: ${analysisHistory.length}`);
       }
       res.end();
