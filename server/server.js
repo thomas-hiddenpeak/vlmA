@@ -162,6 +162,15 @@ const SUMMARY_PROMPT = process.env.SUMMARY_PROMPT || '请分析以下所有历�
 let isCollecting = false;
 let analysisHistory = [];
 
+// 汇总分析进度跟踪
+let summaryProgress = {
+  isGenerating: false,
+  totalItems: 0,
+  processedItems: 0,
+  startTime: null,
+  estimatedEndTime: null
+};
+
 // 静态页面
 app.use('/', express.static(path.join(__dirname, '..', 'public')));
 
@@ -197,6 +206,7 @@ app.post('/analyze', uploadMiddleware, async (req, res) => {
     const apiUrl = req.body.apiUrl || MODEL_URL;
     const modelName = req.body.modelName || MODEL_NAME;
     const apiKey = req.body.apiKey || '';  // API Key，留空表示本地模型
+    const maxTokens = req.body.maxTokens ? parseInt(req.body.maxTokens) : undefined;
 
     // 构建 OpenAI 兼容的请求体（vllm 多模态格式）
     // 多图片格式：先放所有图片，然后是文本
@@ -220,6 +230,11 @@ app.post('/analyze', uploadMiddleware, async (req, res) => {
         include_usage: true  // vLLM 需要这个选项来在流式响应中包含 usage
       }
     };
+    
+    // 添加 max_tokens 参数（如果提供）
+    if (maxTokens) {
+      requestBody.max_tokens = maxTokens;
+    }
 
     console.log(`[${new Date().toISOString()}] Analyzing ${frames.length} frames with prompt: "${userPrompt}"`);
     console.log(`[${new Date().toISOString()}] Using API: ${apiUrl}, Model: ${modelName}`);
@@ -361,11 +376,21 @@ app.post('/collection/stop', async (req, res) => {
       });
     }
     
+    // 初始化汇总进度
+    summaryProgress = {
+      isGenerating: true,
+      totalItems: historyCount,
+      processedItems: historyCount, // 所有记录都已采集完成
+      startTime: new Date().toISOString(),
+      estimatedEndTime: null
+    };
+    
     // 获取自定义汇总提示词（如果提供）
     const summaryPrompt = req.body.summaryPrompt || SUMMARY_PROMPT;
     const apiUrl = req.body.apiUrl || MODEL_URL;
     const modelName = req.body.modelName || MODEL_NAME;
     const apiKey = req.body.apiKey || '';  // API Key，留空表示本地模型
+    const maxTokens = req.body.maxTokens ? parseInt(req.body.maxTokens) : undefined;
     
     // 构建历史记录文本
     let historyText = '';
@@ -387,6 +412,11 @@ app.post('/collection/stop', async (req, res) => {
       temperature: 0.7,
       stream: true
     };
+    
+    // 添加 max_tokens 参数（如果提供）
+    if (maxTokens) {
+      requestBody.max_tokens = maxTokens;
+    }
     
     console.log(`[${new Date().toISOString()}] Generating summary for ${historyCount} entries`);
     
@@ -454,6 +484,10 @@ app.post('/collection/stop', async (req, res) => {
       globalHistoryData.exportTime = new Date().toISOString();
       globalHistoryData.exportTimeLocal = new Date().toLocaleString('zh-CN');
       
+      // 重置汇总进度状态
+      summaryProgress.isGenerating = false;
+      summaryProgress.estimatedEndTime = new Date().toISOString();
+      
       console.log(`[${new Date().toISOString()}] Summary saved to globalHistoryData (${summaryContent.length} chars)`);
       
       res.end();
@@ -461,11 +495,13 @@ app.post('/collection/stop', async (req, res) => {
     
     resp.data.on('error', (err) => {
       console.error('Summary stream error:', err);
+      summaryProgress.isGenerating = false;
       res.end();
     });
     
   } catch (err) {
     console.error('Collection stop error:', err);
+    summaryProgress.isGenerating = false;
     if (err.response) {
       console.error('Response status:', err.response.status);
       console.error('Response statusText:', err.response.statusText);
@@ -489,6 +525,36 @@ app.get('/collection/status', (req, res) => {
     historyCount: analysisHistory.length,
     summaryPrompt: SUMMARY_PROMPT
   });
+});
+
+// 获取分析进度状态
+app.get('/analysis/progress', (req, res) => {
+  try {
+    const progress = {
+      isGenerating: summaryProgress.isGenerating,
+      collectionComplete: !isCollecting,
+      analysisHistory: {
+        total: summaryProgress.totalItems || analysisHistory.length,
+        processed: summaryProgress.processedItems || analysisHistory.length,
+        percentage: summaryProgress.totalItems > 0 
+          ? Math.round((summaryProgress.processedItems / summaryProgress.totalItems) * 100)
+          : 100
+      },
+      summaryGeneration: {
+        inProgress: summaryProgress.isGenerating,
+        startTime: summaryProgress.startTime,
+        estimatedEndTime: summaryProgress.estimatedEndTime
+      },
+      overallStatus: summaryProgress.isGenerating 
+        ? 'generating_summary' 
+        : (isCollecting ? 'collecting' : 'idle')
+    };
+    
+    res.json(progress);
+  } catch (err) {
+    console.error('Progress API error:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // 更新汇总提示词配置

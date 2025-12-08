@@ -647,6 +647,13 @@ async function sendFramesForAnalysis() {
     if (apiKey) {
       form.append('apiKey', apiKey);
     }
+    
+    // 添加 maxTokens 参数
+    const maxTokensInput = document.getElementById('maxTokensInput');
+    const maxTokens = maxTokensInput ? maxTokensInput.value.trim() : '';
+    if (maxTokens) {
+      form.append('maxTokens', maxTokens);
+    }
 
     statusSpan.textContent = `正在分析 ${framesWithTimestamps.length} 帧...`;
     
@@ -872,6 +879,13 @@ async function stopCollectionAndSummarize() {
     // 如果有 API Key，添加到请求体中
     if (insightApiKey) {
       requestBody.apiKey = insightApiKey;
+    }
+    
+    // 添加 maxTokens 参数
+    const maxTokensInput = document.getElementById('maxTokensInput');
+    const maxTokens = maxTokensInput ? maxTokensInput.value.trim() : '';
+    if (maxTokens) {
+      requestBody.maxTokens = maxTokens;
     }
     
     const response = await fetch(`${API_BASE_URL}/collection/stop`, {
@@ -1603,6 +1617,9 @@ function applyConfig(config) {
   const apiKeyInput = document.getElementById('apiKeyInput');
   if (apiKeyInput && config.apiKey !== undefined) apiKeyInput.value = config.apiKey;
   
+  const maxTokensInput = document.getElementById('maxTokensInput');
+  if (maxTokensInput && config.maxTokens !== undefined) maxTokensInput.value = config.maxTokens;
+  
   if (config.insightApiUrl) insightApiUrlInput.value = config.insightApiUrl;
   if (config.insightModel) insightModelInput.value = config.insightModel;
   const insightApiKeyInput = document.getElementById('insightApiKeyInput');
@@ -1654,12 +1671,14 @@ function getCurrentConfig() {
   const insightApiKeyInput = document.getElementById('insightApiKeyInput');
   const taskPromptInput = document.getElementById('taskPromptInput');
   const autoExtractCheckbox = document.getElementById('autoExtractTasksCheckbox');
+  const maxTokensInput = document.getElementById('maxTokensInput');
   
   return {
     // 模型配置
     apiUrl: apiUrlInput.value.trim(),
     modelName: modelNameInput.value.trim(),
     apiKey: apiKeyInput ? apiKeyInput.value.trim() : '',
+    maxTokens: maxTokensInput ? maxTokensInput.value.trim() : '',
     insightApiUrl: insightApiUrlInput.value.trim(),
     insightModel: insightModelInput.value.trim(),
     insightApiKey: insightApiKeyInput ? insightApiKeyInput.value.trim() : '',

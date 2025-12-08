@@ -1174,6 +1174,10 @@
                     <input id="modelNameInput" type="text" value="qwen-vl-plus" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-width: 0;" />
                   </div>
                   <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center;">
+                    <label style="font-size: 0.85rem; color: #666;">最大输出</label>
+                    <input id="maxTokensInput" type="number" placeholder="留空表示不限制" min="1" step="100" style="padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-width: 0;" title="限制模型输出的最大token数,留空则使用模型默认值" />
+                  </div>
+                  <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center;">
                     <label style="font-size: 0.85rem; color: #666;">API Key</label>
                     <div style="display: flex; gap: 8px; align-items: center; min-width: 0;">
                       <input id="apiKeyInput" type="password" placeholder="留空表示无需认证(本地模型)" style="flex: 1; padding: 6px 10px; border: 2px solid #e1e4e8; border-radius: 6px; font-size: 0.85rem; min-width: 0;" />
