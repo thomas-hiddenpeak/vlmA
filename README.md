@@ -203,7 +203,13 @@ npm start
   - 本地：`RM-01 LLM`
   - OpenAI：`gpt-4o`、`gpt-4-vision-preview` 等
   - 阿里云：`qwen-vl-plus`、`qwen-vl-max` 等
+- **最大输出**：限制模型输出的最大 Token 数量（可选，留空表示不限制）
 - **API Key**：API 密钥（留空表示本地模型无需认证）
+- **分辨率**：视频采集分辨率选择
+  - 全高清：1920x1080（默认）
+  - 高清：1280x720
+  - 标清：640x480
+  - 极清：3840x2160
 - **分析间隔**：每次分析的时间间隔，单位秒（默认：12秒）
 - **采集帧数**：每次分析采集的视频帧数（默认：4帧）
 
@@ -508,6 +514,43 @@ curl -X POST http://localhost:43003/api/stop-analysis
 - UI 实时同步更新
 
 ### 📊 数据接口
+
+#### 获取分析进度
+```bash
+GET /analysis/progress
+
+# 示例
+curl http://localhost:43003/analysis/progress | jq .
+```
+
+**功能说明：**
+- 实时返回采集进度和汇总生成进度
+- 提供总项目数、已完成数和百分比
+- 显示整体状态
+
+**响应示例：**
+```json
+{
+  "isGenerating": false,
+  "collectionComplete": true,
+  "analysisHistory": {
+    "total": 156,
+    "processed": 156,
+    "percentage": 100
+  },
+  "summaryGeneration": {
+    "inProgress": false,
+    "startTime": "2025-12-08T01:40:41.478Z",
+    "estimatedEndTime": "2025-12-08T01:42:15.123Z"
+  },
+  "overallStatus": "idle"
+}
+```
+
+**状态说明：**
+- `idle`: 空闲状态
+- `collecting`: 正在采集中
+- `generating_summary`: 正在生成汇总
 
 #### 同步历史数据
 ```bash
