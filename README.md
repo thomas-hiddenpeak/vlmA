@@ -526,13 +526,16 @@ curl http://localhost:43003/analysis/progress | jq .
 **功能说明：**
 - 实时返回采集进度和汇总生成进度
 - 提供总项目数、已完成数和百分比
-- 显示整体状态
+- 显示整体状态和数据就绪状态
+- **重要**：调用 `/history/export` 前应确保 `dataReadyForExport: true` 或 `overallStatus: "completed"`
 
 **响应示例：**
 ```json
 {
   "isGenerating": false,
   "collectionComplete": true,
+  "isStopping": false,
+  "dataReadyForExport": true,
   "analysisHistory": {
     "total": 156,
     "processed": 156,
@@ -543,14 +546,38 @@ curl http://localhost:43003/analysis/progress | jq .
     "startTime": "2025-12-08T01:40:41.478Z",
     "estimatedEndTime": "2025-12-08T01:42:15.123Z"
   },
-  "overallStatus": "idle"
+  "overallStatus": "completed"
 }
 ```
 
 **状态说明：**
 - `idle`: 空闲状态
 - `collecting`: 正在采集中
+- `stopping`: 正在停止（等待流式请求完成，约1秒）
 - `generating_summary`: 正在生成汇总
+- `completed`: 完成并准备好导出（此时可安全调用 `/history/export`）
+
+**关键字段说明：**
+- `collectionComplete`: 采集是否已完成
+- `isStopping`: 是否正在停止过程中（等待中）
+- `dataReadyForExport`: **数据是否完全准备好导出**（推荐检查此字段）
+- `isGenerating`: 是否正在生成汇总
+
+**最佳实践：**
+```javascript
+// 定期检查进度
+const checkProgress = async () => {
+  const response = await fetch('/analysis/progress');
+  const progress = await response.json();
+  
+  // 等待数据完全准备好
+  if (progress.dataReadyForExport && progress.overallStatus === 'completed') {
+    // 现在可以安全地获取导出数据
+    const exportData = await fetch('/history/export');
+    // 处理导出数据...
+  }
+};
+```
 
 #### 同步历史数据
 ```bash

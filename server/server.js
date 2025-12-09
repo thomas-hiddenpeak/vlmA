@@ -161,6 +161,7 @@ const SUMMARY_PROMPT = process.env.SUMMARY_PROMPT || '请分析以下所有历�
 // 采集状态和历史记录
 let isCollecting = false;
 let analysisHistory = [];
+let isStoppingCollection = false; // 标记正在停止采集过程（等待中）
 
 // 汇总分析进度跟踪
 let summaryProgress = {
@@ -168,7 +169,8 @@ let summaryProgress = {
   totalItems: 0,
   processedItems: 0,
   startTime: null,
-  estimatedEndTime: null
+  estimatedEndTime: null,
+  dataReadyForExport: false // 标记数据是否已准备好导出
 };
 
 // 静态页面
@@ -338,6 +340,11 @@ app.post('/collection/start', (req, res) => {
     
     isCollecting = true;
     analysisHistory = []; // 清空历史记录
+    
+    // 重置状态标记
+    isStoppingCollection = false;
+    summaryProgress.dataReadyForExport = false;
+    
     console.log(`[${new Date().toISOString()}] Started collection`);
     
     res.json({ 
@@ -361,9 +368,17 @@ app.post('/collection/stop', async (req, res) => {
     }
     
     isCollecting = false;
-    // 立即保存历史记录的快照,避免在汇总过程中被清空
+    isStoppingCollection = true; // 标记正在停止
+    
+    // 等待1秒以允许正在进行的流式响应完成保存
+    // 这样可以避免最后1-2条分析结果丢失
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // 保存历史记录的快照,避免在汇总过程中被清空
     const historySnapshot = [...analysisHistory];
     const historyCount = historySnapshot.length;
+    
+    isStoppingCollection = false; // 等待完成，开始生成汇总
     
     console.log(`[${new Date().toISOString()}] Stopped collection. Total entries: ${historyCount}`);
     
@@ -382,7 +397,8 @@ app.post('/collection/stop', async (req, res) => {
       totalItems: historyCount,
       processedItems: historyCount, // 所有记录都已采集完成
       startTime: new Date().toISOString(),
-      estimatedEndTime: null
+      estimatedEndTime: null,
+      dataReadyForExport: false // 数据尚未准备好
     };
     
     // 获取自定义汇总提示词（如果提供）
@@ -484,11 +500,13 @@ app.post('/collection/stop', async (req, res) => {
       globalHistoryData.exportTime = new Date().toISOString();
       globalHistoryData.exportTimeLocal = new Date().toLocaleString('zh-CN');
       
-      // 重置汇总进度状态
+      // 重置汇总进度状态 - 数据已完全准备好
       summaryProgress.isGenerating = false;
       summaryProgress.estimatedEndTime = new Date().toISOString();
+      summaryProgress.dataReadyForExport = true; // 标记数据已准备好导出
       
       console.log(`[${new Date().toISOString()}] Summary saved to globalHistoryData (${summaryContent.length} chars)`);
+      console.log(`[${new Date().toISOString()}] Data ready for export`);
       
       res.end();
     });
@@ -496,12 +514,15 @@ app.post('/collection/stop', async (req, res) => {
     resp.data.on('error', (err) => {
       console.error('Summary stream error:', err);
       summaryProgress.isGenerating = false;
+      summaryProgress.dataReadyForExport = false; // 出错时标记为未准备好
       res.end();
     });
     
   } catch (err) {
     console.error('Collection stop error:', err);
     summaryProgress.isGenerating = false;
+    summaryProgress.dataReadyForExport = false; // 出错时标记为未准备好
+    isStoppingCollection = false; // 重置停止标记
     if (err.response) {
       console.error('Response status:', err.response.status);
       console.error('Response statusText:', err.response.statusText);
@@ -530,9 +551,23 @@ app.get('/collection/status', (req, res) => {
 // 获取分析进度状态
 app.get('/analysis/progress', (req, res) => {
   try {
+    // 确定整体状态
+    let overallStatus = 'idle';
+    if (isCollecting) {
+      overallStatus = 'collecting';
+    } else if (isStoppingCollection) {
+      overallStatus = 'stopping'; // 正在停止（等待中）
+    } else if (summaryProgress.isGenerating) {
+      overallStatus = 'generating_summary';
+    } else if (summaryProgress.dataReadyForExport) {
+      overallStatus = 'completed'; // 完成并准备好导出
+    }
+    
     const progress = {
       isGenerating: summaryProgress.isGenerating,
       collectionComplete: !isCollecting,
+      isStopping: isStoppingCollection, // 是否正在停止过程中
+      dataReadyForExport: summaryProgress.dataReadyForExport, // 数据是否准备好导出
       analysisHistory: {
         total: summaryProgress.totalItems || analysisHistory.length,
         processed: summaryProgress.processedItems || analysisHistory.length,
@@ -545,9 +580,7 @@ app.get('/analysis/progress', (req, res) => {
         startTime: summaryProgress.startTime,
         estimatedEndTime: summaryProgress.estimatedEndTime
       },
-      overallStatus: summaryProgress.isGenerating 
-        ? 'generating_summary' 
-        : (isCollecting ? 'collecting' : 'idle')
+      overallStatus: overallStatus
     };
     
     res.json(progress);
