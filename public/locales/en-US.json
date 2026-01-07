@@ -1,7 +1,11 @@
 {
   "app": {
-    "title": "RMinte Multimodal Analysis Engine",
+    "title": "RMinte VLMA",
     "subtitle": "VLM-based Multimodal Analysis Testing Platform"
+  },
+  "currency": {
+    "symbol": "$",
+    "perThousand": "/1K"
   },
   "quickStart": {
     "title": "Quick Start",
@@ -15,6 +19,7 @@
   "video": {
     "preview": "Video Preview",
     "device": "UVC Device:",
+    "camera": "Camera",
     "loading": "Loading...",
     "refreshDevices": "Refresh device list",
     "resolution": "Resolution:",
@@ -27,6 +32,7 @@
     "notStarted": "Video stream not started",
     "streamStarted": "Local video stream started",
     "streamStopped": "Local video stream stopped",
+    "stopped": "Stopped",
     "collecting": "Collecting: {frames} frames every {interval}s ({fps} fps)",
     "cached": "Cached {current}/{total} frames",
     "framePreview": "📷 Frame Buffer Preview",
@@ -66,10 +72,17 @@
       "apiKey": "API Key",
       "apiKeyPlaceholder": "Leave empty if no auth needed (local model)",
       "getKey": "🔑 Get Key",
-      "price": "Price (¥/1K)",
+      "getKeyTooltip": "Get Alibaba Cloud Bailian API Key",
+      "price": "Price",
+      "inputPrice": "Input",
+      "outputPrice": "Output",
+      "inputPriceTooltip": "Input tokens price per 1K tokens",
+      "outputPriceTooltip": "Output tokens price per 1K tokens",
+      "maxOutputTooltip": "Limit max output tokens, leave empty for model default",
       "visionTip": "💡 Using Alibaba Cloud Bailian: Click \"Get Key\" to apply for a free API Key, supports qwen-vl-plus/qwen-vl-max vision models",
       "textTip": "💡 Using Alibaba Cloud Bailian: Click \"Get Key\" to apply for a free API Key, supports qwen-max/qwen-plus text models",
-      "saveConfig": "💾 Save Model Config"
+      "saveConfig": "💾 Save Model Config",
+      "configSaved": "Model configuration saved"
     },
     "prompt": {
       "analysisTitle": "📹 Analysis Prompt",
@@ -84,7 +97,8 @@
       "taskTip": "ℹ️ This prompt extracts actionable tasks from summaries and insights. Called automatically after generating summaries, hourly insights, and daily insights.",
       "autoExtract": "Auto-extract tasks",
       "autoExtractTip": "When enabled, tasks will be automatically extracted after summaries, hourly and daily insights",
-      "saveConfig": "💾 Save Prompt Config"
+      "saveConfig": "💾 Save Prompt Config",
+      "configSaved": "Prompt configuration saved"
     },
     "params": {
       "analysisTitle": "📹 Analysis Parameters",
@@ -95,15 +109,25 @@
       "fifteen": "15min Interval",
       "hour": "1 Hour Interval",
       "day": "Daily Interval",
-      "saveConfig": "💾 Save Params Config"
+      "intervalUnit": "seconds",
+      "minuteUnit": "analysis records",
+      "fifteenUnit": "60s insights",
+      "hourUnit": "15min insights",
+      "dayUnit": "1h insights",
+      "saveConfig": "💾 Save Params Config",
+      "configSaved": "Parameters configuration saved"
     },
     "reset": "🔄 Reset to Default",
-    "saved": "✅ Configuration saved"
+    "resetConfirm": "Are you sure you want to reset to default settings? This will clear all saved configurations and cannot be undone.",
+    "resetSuccess": "✅ Reset to default settings",
+    "saved": "✅ Configuration saved",
+    "saveFailed": "Save failed, please try again"
   },
   "history": {
     "title": "Analysis History",
     "record": "Record #{number}",
-    "noHistory": "No analysis history yet"
+    "noHistory": "No analysis history yet",
+    "exportSuccess": "✅ History data exported"
   },
   "insight": {
     "title": "💡 Multi-level Insight Analysis",
@@ -112,20 +136,33 @@
       "fifteen": "15min",
       "hour": "1 Hour",
       "day": "Daily"
-    }
+    },
+    "viewPrompt": "View Prompt",
+    "systemPrompt": "System Prompt",
+    "userPrompt": "User Prompt"
   },
   "summary": {
     "title": "📊 Historical Summary Analysis",
     "download": "📥 Download",
+    "downloadTooltip": "Download all analysis history",
     "historyCount": "Items collected",
-    "generateTime": "Generated at"
+    "generateTime": "Generated at",
+    "generating": "Generating summary analysis...",
+    "generatingBtn": "⏳ Generating..."
   },
   "task": {
     "title": "To-Do Tasks",
     "noTasks": "No tasks yet",
     "autoExtractTip": "Tasks will be auto-extracted from summaries and insights",
     "clearAll": "🗑️ Clear All Tasks",
-    "confirmClear": "Are you sure you want to clear all tasks?"
+    "confirmClear": "Are you sure you want to clear all tasks?",
+    "confirmDelete": "Are you sure you want to delete this task?",
+    "alreadyEmpty": "⚠️ Task list is already empty",
+    "allCleared": "✅ All tasks cleared",
+    "extracted": "✅ Extracted {count} new tasks from {source}"
+  },
+  "collection": {
+    "indicator": "🔴 Collecting history..."
   },
   "mobile": {
     "tabs": {
@@ -137,6 +174,9 @@
   },
   "errors": {
     "streamFailed": "Failed to start local video stream",
+    "analysisFailed": "Failed to start analysis",
+    "sendFailed": "Send or receive failed",
+    "summaryFailed": "Failed to generate summary",
     "noDevices": "No video devices",
     "cantGetDevices": "Cannot get devices",
     "deviceEnumUnavailable": "Device enumeration unavailable"
@@ -148,5 +188,10 @@
   "language": {
     "zh-CN": "简体中文",
     "en-US": "English"
+  },
+  "time": {
+    "hour": "h",
+    "minute": "m",
+    "second": "s"
   }
 }

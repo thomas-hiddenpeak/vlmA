@@ -1,7 +1,7 @@
 {
   "name": "rminte-multimodal-engine",
   "version": "0.1.0",
-  "description": "RMinte 多模态分析引擎 - 跨平台桌面应用",
+  "description": "RMinte VLMA - Cross-platform Desktop Application",
   "main": "src/main.js",
   "homepage": "https://github.com/thomas-hiddenpeak/vlmA",
   "author": {
@@ -38,7 +38,7 @@
   "dependencies": {},
   "build": {
     "appId": "com.hiddenpeak.rminte",
-    "productName": "RMinte 多模态分析引擎",
+    "productName": "RMinte VLMA",
     "directories": {
       "output": "dist",
       "buildResources": "assets"

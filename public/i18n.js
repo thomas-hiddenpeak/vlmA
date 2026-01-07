@@ -195,6 +195,9 @@
       element.value = t(key);
     });
 
+    // 更新页面标题
+    document.title = t('app.title');
+
     // 更新语言选择器的显示
     updateLanguageSwitcher();
   }
