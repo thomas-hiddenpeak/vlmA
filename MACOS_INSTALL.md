@@ -1,5 +1,11 @@
 # macOS 安装使用指南
 
+## 版本说明
+
+> ⚠️ **重要**: 从 v1.9.1 版本开始，应用名称从 "RMinte 多模态分析引擎" 更改为 "RMinte VLMA"。
+> 
+> 请根据您安装的版本参考对应的配置说明。
+
 ## 解决"应用已损坏"或"无法打开"提示
 
 在 macOS 上首次运行应用时，系统可能会提示"应用已损坏，无法打开"或"无法验证开发者"。这是因为应用没有经过苹果官方签名（需要付费开发者账号）。请按照以下步骤解决：
@@ -13,8 +19,18 @@
 
 ### 方法二：使用终端命令（推荐）⭐
 
-打开终端（Terminal），输入以下命令：
+打开终端（Terminal），根据您的版本输入对应命令：
 
+**v1.9.1 及以后版本：**
+```bash
+# 移除隔离属性
+sudo xattr -rd com.apple.quarantine "/Applications/RMinte VLMA.app"
+
+# 或者，如果应用在其他位置（如下载文件夹）
+sudo xattr -rd com.apple.quarantine ~/Downloads/RMinte\ VLMA.app
+```
+
+**v1.9.0 及以前版本：**
 ```bash
 # 移除隔离属性
 sudo xattr -rd com.apple.quarantine "/Applications/RMinte 多模态分析引擎.app"
@@ -42,12 +58,18 @@ sudo spctl --master-enable
 1. 点击"好"或"允许"授予摄像头访问权限
 2. 如果不小心点了"拒绝"，可以通过以下方式重新授权：
    - 打开 **系统设置** > **隐私与安全性** > **摄像头**
-   - 找到 "RMinte 多模态分析引擎"，勾选启用
+   - **v1.9.1+**: 找到 "RMinte VLMA"，勾选启用
+   - **v1.9.0 及以前**: 找到 "RMinte 多模态分析引擎"，勾选启用
 
 ## ARM64 vs Intel 版本选择
 
 根据您的 Mac 芯片类型选择对应版本：
 
+**v1.9.1 及以后版本：**
+- **Apple Silicon (M1/M2/M3/M4)**: 下载 `RMinte VLMA-X.X.X-arm64.dmg`
+- **Intel Mac**: 下载 `RMinte VLMA-X.X.X.dmg`
+
+**v1.9.0 及以前版本：**
 - **Apple Silicon (M1/M2/M3/M4)**: 下载 `RMinte 多模态分析引擎-X.X.X-arm64.dmg`
 - **Intel Mac**: 下载 `RMinte 多模态分析引擎-X.X.X.dmg`
 
@@ -101,20 +123,31 @@ API Key: sk-xxxxx（你的 OpenAI API Key）
 
 ### 应用无法启动
 
-1. **检查应用权限：**
-   ```bash
-   ls -la "/Applications/RMinte 多模态分析引擎.app/Contents/MacOS/"
-   ```
+根据您的版本选择对应命令：
 
-2. **如需要，添加执行权限：**
-   ```bash
-   chmod +x "/Applications/RMinte 多模态分析引擎.app/Contents/MacOS/RMinte 多模态分析引擎"
-   ```
+**v1.9.1+ 版本：**
+```bash
+# 检查应用权限
+ls -la "/Applications/RMinte VLMA.app/Contents/MacOS/"
 
-3. **查看应用日志：**
-   ```bash
-   tail -f ~/Library/Application\ Support/RMinte\ 多模态分析引擎/app.log
-   ```
+# 添加执行权限（如需要）
+chmod +x "/Applications/RMinte VLMA.app/Contents/MacOS/RMinte VLMA"
+
+# 查看应用日志
+tail -f ~/Library/Application\ Support/RMinte\ VLMA/app.log
+```
+
+**v1.9.0 及以前版本：**
+```bash
+# 检查应用权限
+ls -la "/Applications/RMinte 多模态分析引擎.app/Contents/MacOS/"
+
+# 添加执行权限（如需要）
+chmod +x "/Applications/RMinte 多模态分析引擎.app/Contents/MacOS/RMinte 多模态分析引擎"
+
+# 查看应用日志
+tail -f ~/Library/Application\ Support/RMinte\ 多模态分析引擎/app.log
+```
 
 ### 后端服务器启动失败（ERR_CONNECTION_REFUSED）
 
@@ -136,6 +169,13 @@ API Key: sk-xxxxx（你的 OpenAI API Key）
    ```
 
 3. **查看详细错误日志：**
+
+   **v1.9.1+ 版本：**
+   ```bash
+   cat ~/Library/Application\ Support/RMinte\ VLMA/app.log
+   ```
+
+   **v1.9.0 及以前版本：**
    ```bash
    cat ~/Library/Application\ Support/RMinte\ 多模态分析引擎/app.log
    ```
@@ -146,10 +186,24 @@ API Key: sk-xxxxx（你的 OpenAI API Key）
 2. 确认摄像头未被其他应用占用（如 Zoom、Teams、FaceTime）
 3. 尝试重启应用
 
+### 画面全黑问题
+
+如果视频预览显示全黑，可能是以下原因：
+
+1. **摄像头权限未授予**：检查系统设置 > 隐私与安全性 > 摄像头
+2. **摄像头被占用**：关闭其他使用摄像头的应用
+3. **设备选择错误**：尝试在设备下拉菜单中选择其他摄像头
+4. **分辨率不支持**：尝试切换到较低的分辨率（如 720p）
+
 ### 查看系统错误日志
 
+**v1.9.1+ 版本：**
 ```bash
-# 查看最近 5 分钟的系统日志
+log show --predicate 'process == "RMinte VLMA"' --last 5m
+```
+
+**v1.9.0 及以前版本：**
+```bash
 log show --predicate 'process == "RMinte 多模态分析引擎"' --last 5m
 ```
 
@@ -165,6 +219,13 @@ log show --predicate 'process == "RMinte 多模态分析引擎"' --last 5m
 1. 关闭应用
 2. 从应用程序文件夹删除应用
 3. 清理应用数据（可选）：
+
+   **v1.9.1+ 版本：**
+   ```bash
+   rm -rf ~/Library/Application\ Support/RMinte\ VLMA/
+   ```
+
+   **v1.9.0 及以前版本：**
    ```bash
    rm -rf ~/Library/Application\ Support/RMinte\ 多模态分析引擎/
    ```
@@ -177,7 +238,7 @@ log show --predicate 'process == "RMinte 多模态分析引擎"' --last 5m
 - Mac 芯片类型（Intel/Apple Silicon）
 - 应用版本
 - 错误信息截图
-- 应用日志文件（`~/Library/Application Support/RMinte 多模态分析引擎/app.log`）
+- 应用日志文件
 
 **GitHub Issues**: https://github.com/thomas-hiddenpeak/vlmA/issues
 

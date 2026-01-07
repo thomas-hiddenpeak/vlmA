@@ -1,10 +1,12 @@
-# RMinte 多模态分析引擎
+# RMinte VLMA
 
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/thomas-hiddenpeak/vlmA)](https://github.com/thomas-hiddenpeak/vlmA/releases)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![GitHub last commit](https://img.shields.io/github/last-commit/thomas-hiddenpeak/vlmA)](https://github.com/thomas-hiddenpeak/vlmA/commits/main)
 [![GitHub issues](https://img.shields.io/github/issues/thomas-hiddenpeak/vlmA)](https://github.com/thomas-hiddenpeak/vlmA/issues)
 [![GitHub stars](https://img.shields.io/github/stars/thomas-hiddenpeak/vlmA)](https://github.com/thomas-hiddenpeak/vlmA/stargazers)
+
+> **注意**: 从 v1.9.1 版本开始，应用名称从 "RMinte 多模态分析引擎" 更改为 "RMinte VLMA"。
 
 基于 VLM 的多模态分析PE测试平台,支持本地 UVC 摄像头采集、多层级洞察分析和流式输出。支持打包为跨平台桌面应用。
 

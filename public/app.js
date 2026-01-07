@@ -326,27 +326,46 @@ async function startVideoStream() {
     video.srcObject = stream;
     video.style.display = 'block';
 
+    // 等待视频元素准备好（loadedmetadata 事件确保 videoWidth/videoHeight 可用）
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('Video load timeout'));
+      }, 10000); // 10秒超时
+      
+      video.onloadedmetadata = () => {
+        clearTimeout(timeout);
+        video.play().then(resolve).catch(reject);
+      };
+      
+      // 如果视频已经准备好（可能是从缓存加载）
+      if (video.readyState >= 2) {
+        clearTimeout(timeout);
+        video.play().then(resolve).catch(reject);
+      }
+    });
+
     // 启动本地帧捕获，定期把 video -> canvas -> base64 存入 latestFrame
     if (localCaptureTimer) clearInterval(localCaptureTimer);
     localCaptureTimer = setInterval(() => {
       try {
-        const w = video.videoWidth || 1920;
-        const h = video.videoHeight || 1080;
+        // 确保视频已准备好且有有效尺寸
+        if (video.readyState < 2 || video.videoWidth === 0 || video.videoHeight === 0) {
+          return; // 视频尚未准备好，跳过本次捕获
+        }
+        const w = video.videoWidth;
+        const h = video.videoHeight;
         captureCanvas.width = w;
         captureCanvas.height = h;
         captureCtx.drawImage(video, 0, 0, w, h);
         const dataUrl = captureCanvas.toDataURL('image/jpeg', 0.8);
         latestFrame = dataUrl.split(',')[1];
       } catch (e) {
-        // video 可能尚未准备好
+        console.warn('帧捕获失败:', e);
       }
     }, 200);
 
     isStreamActive = true;
-    // toggleStreamBtn.textContent = '⏸️ 停止视频流';
-    // toggleStreamBtn.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
     deviceSelect.disabled = true;
-    // startBtn.disabled = false;
     statusSpan.textContent = i18n.t('video.streamStarted');
   } catch (err) {
     console.error(err);

@@ -170,6 +170,24 @@ function createWindow() {
     show: false
   });
 
+  // 处理权限请求（摄像头等）
+  mainWindow.webContents.session.setPermissionRequestHandler((webContents, permission, callback) => {
+    const allowedPermissions = ['media', 'mediaKeySystem', 'geolocation', 'notifications'];
+    if (allowedPermissions.includes(permission)) {
+      log(`权限请求被允许: ${permission}`);
+      callback(true);
+    } else {
+      log(`权限请求被拒绝: ${permission}`);
+      callback(false);
+    }
+  });
+
+  // 处理权限检查
+  mainWindow.webContents.session.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {
+    const allowedPermissions = ['media', 'mediaKeySystem', 'geolocation', 'notifications'];
+    return allowedPermissions.includes(permission);
+  });
+
   // 通过本地服务器加载应用
   mainWindow.loadURL('http://localhost:51098/');
 
@@ -198,7 +216,7 @@ function createWindow() {
 }
 
 // 设置应用名称
-app.setName('RMinte 多模态分析引擎');
+app.setName('RMinte VLMA');
 
 // 后端端口（可通过环境变量覆盖）
 const BACKEND_PORT = process.env.PORT || 43003;

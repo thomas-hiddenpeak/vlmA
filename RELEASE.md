@@ -61,20 +61,37 @@ https://github.com/thomas-hiddenpeak/vlmA/actions
 
 ## 产物说明
 
+> **注意**: 从 v1.9.1 版本开始，应用名称从 "RMinte 多模态分析引擎" 更改为 "RMinte VLMA"。
+
 ### Windows
 
-- `vlmA-Vision-Monitor-Setup-{version}.exe` - NSIS 安装程序
-- `vlmA-Vision-Monitor-{version}.exe` - 便携版
+**v1.9.1+ 版本：**
+- `RMinte VLMA-Setup-{version}.exe` - NSIS 安装程序
+- `RMinte VLMA-{version}.exe` - 便携版
+
+**v1.9.0 及以前版本：**
+- `RMinte 多模态分析引擎-Setup-{version}.exe` - NSIS 安装程序
+- `RMinte 多模态分析引擎-{version}.exe` - 便携版
 
 ### macOS
 
-- `vlmA-Vision-Monitor-{version}-arm64.dmg` - Apple Silicon 版本
-- `vlmA-Vision-Monitor-{version}-x64.dmg` - Intel 版本
+**v1.9.1+ 版本：**
+- `RMinte VLMA-{version}-arm64.dmg` - Apple Silicon 版本
+- `RMinte VLMA-{version}-x64.dmg` - Intel 版本
+
+**v1.9.0 及以前版本：**
+- `RMinte 多模态分析引擎-{version}-arm64.dmg` - Apple Silicon 版本
+- `RMinte 多模态分析引擎-{version}-x64.dmg` - Intel 版本
 
 ### Linux
 
-- `vlmA-Vision-Monitor-{version}.AppImage` - 通用格式
-- `vlmA-Vision-Monitor_{version}_amd64.deb` - Debian/Ubuntu 包
+**v1.9.1+ 版本：**
+- `RMinte VLMA-{version}.AppImage` - 通用格式
+- `RMinte VLMA_{version}_amd64.deb` - Debian/Ubuntu 包
+
+**v1.9.0 及以前版本：**
+- `RMinte 多模态分析引擎-{version}.AppImage` - 通用格式
+- `RMinte 多模态分析引擎_{version}_amd64.deb` - Debian/Ubuntu 包
 
 ## 版本号规范
 
