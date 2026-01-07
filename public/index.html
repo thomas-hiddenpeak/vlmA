@@ -11,6 +11,7 @@
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="shortcut icon" href="/favicon.ico">
   <title>RMinte 多模态分析引擎</title>
+  <script src="/i18n.js"></script>
   <style>
     :root {
       --primary-color: #007AFF;
@@ -989,8 +990,13 @@
 <body>
   <div class="container">
     <div class="header">
-      <h1>🎥 RMinte 多模态分析引擎 </h1>
-      <p>基于 VLM 的多模态分析PE测试平台 </p>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h1>🎥 <span data-i18n="app.title">RMinte 多模态分析引擎</span></h1>
+          <p data-i18n="app.subtitle">基于 VLM 的多模态分析PE测试平台</p>
+        </div>
+        <div id="languageSwitcherContainer" style="flex-shrink: 0;"></div>
+      </div>
     </div>
     
     <div class="main-content">
@@ -1001,45 +1007,45 @@
           <div style="display: flex; align-items: center; gap: 12px; position: relative;">
             <div style="font-size: 2rem;">🚀</div>
             <div style="flex: 1;">
-              <div style="font-weight: 700; font-size: 0.95rem; color: #333; margin-bottom: 4px;">快速开始</div>
+              <div style="font-weight: 700; font-size: 0.95rem; color: #333; margin-bottom: 4px;" data-i18n="quickStart.title">快速开始</div>
               <div style="font-size: 0.8rem; color: #666; line-height: 1.5;">
-                还没有 API Key？<a href="https://bailian.console.aliyun.com/?tab=model#/api-key" target="_blank" style="color: var(--primary-color); text-decoration: none; font-weight: 600; border-bottom: 1px solid var(--primary-color);">免费获取阿里云百炼 API Key</a>，然后在「模型配置」中填入即可开始使用！
+                <span data-i18n="quickStart.noApiKey">还没有 API Key？</span><a href="https://bailian.console.aliyun.com/?tab=model#/api-key" target="_blank" style="color: var(--primary-color); text-decoration: none; font-weight: 600; border-bottom: 1px solid var(--primary-color);" data-i18n="quickStart.getApiKey">免费获取阿里云百炼 API Key</a><span data-i18n="quickStart.fillInConfig">，然后在「模型配置」中填入即可开始使用！</span>
               </div>
               <div style="font-size: 0.75rem; color: #999; margin-top: 4px;">
-                💻 想要本地部署？推荐使用 <a href="https://www.rminte.com/" target="_blank" style="color: var(--primary-color); text-decoration: none; font-weight: 600; border-bottom: 1px solid var(--primary-color);">RM-01 便携 AI 超算中心</a>
+                💻 <span data-i18n="quickStart.localDeploy">想要本地部署？推荐使用</span> <a href="https://www.rminte.com/" target="_blank" style="color: var(--primary-color); text-decoration: none; font-weight: 600; border-bottom: 1px solid var(--primary-color);" data-i18n="quickStart.rm01">RM-01 便携 AI 超算中心</a>
               </div>
             </div>
-            <button id="closeQuickStart" style="position: absolute; top: -8px; right: -8px; background: #f5f5f5; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #999; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" title="关闭提示">×</button>
+            <button id="closeQuickStart" style="position: absolute; top: -8px; right: -8px; background: #f5f5f5; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #999; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" data-i18n-title="quickStart.closeTooltip" title="关闭提示">×</button>
           </div>
         </div>
         
         <!-- 视频预览卡片 -->
         <div class="card mobile-tab-collection">
-          <div class="card-title">视频预览</div>
+          <div class="card-title" data-i18n="video.preview">视频预览</div>
           <video id="video" autoplay playsinline></video>
           
           <div class="controls">
             <div class="control-group" style="flex: 1;">
-              <label>UVC设备:</label>
+              <label data-i18n="video.device">UVC设备:</label>
               <select id="deviceSelect" class="config-input" style="min-width: 150px; flex: 1;">
-                <option value="default">加载中...</option>
+                <option value="default" data-i18n="video.loading">加载中...</option>
               </select>
-              <button id="refreshDevicesBtn" style="padding: 8px 12px; background: #f8f9fa; color: #666; border: 2px solid #e1e4e8;" title="刷新设备列表">🔄</button>
+              <button id="refreshDevicesBtn" style="padding: 8px 12px; background: #f8f9fa; color: #666; border: 2px solid #e1e4e8;" data-i18n-title="video.refreshDevices" title="刷新设备列表">🔄</button>
             </div>
             <div class="control-group" style="flex: 1;">
-              <label>分辨率:</label>
+              <label data-i18n="video.resolution">分辨率:</label>
               <select id="resolutionSelect" class="config-input" style="min-width: 150px; flex: 1;">
-                <option value="1920x1080" selected>全高清</option>
-                <option value="1280x720">高清</option>
-                <option value="640x480">标清</option>
-                <option value="3840x2160">极清</option>
+                <option value="1920x1080" selected data-i18n="video.fullHD">全高清</option>
+                <option value="1280x720" data-i18n="video.hd">高清</option>
+                <option value="640x480" data-i18n="video.sd">标清</option>
+                <option value="3840x2160" data-i18n="video.ultraHD">极清</option>
               </select>
             </div>
-            <button id="toggleAnalysisBtn" style="background: var(--primary-color); color: white; padding: 10px 24px;">▶️ 开始分析与采集</button>
+            <button id="toggleAnalysisBtn" style="background: var(--primary-color); color: white; padding: 10px 24px;" data-i18n="video.startAnalysis">▶️ 开始分析与采集</button>
           </div>
           
           <div class="status-indicator" id="statusContainer" style="margin-top: 16px;">
-            <span id="status">未启动视频流</span>
+            <span id="status" data-i18n="video.notStarted">未启动视频流</span>
           </div>
           
           <!-- 缓存帧缩略图 -->
@@ -1055,23 +1061,23 @@
           <!-- Tokens 统计 -->
           <div style="margin-top: 12px; padding: 12px; background: #F2F2F7; border-radius: 8px; border: 1px solid var(--border-color);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <div style="font-size: 0.9rem; color: #333; font-weight: 600;">📊 Tokens 使用统计</div>
+              <div style="font-size: 0.9rem; color: #333; font-weight: 600;" data-i18n="tokens.title">📊 Tokens 使用统计</div>
             </div>
             
             <!-- 分析模型统计 -->
             <div style="padding: 8px; background: white; border-radius: 6px; margin-bottom: 8px;">
-              <div style="font-size: 0.8rem; color: #666; font-weight: 600; margin-bottom: 4px;">🎥 视觉分析模型</div>
+              <div style="font-size: 0.8rem; color: #666; font-weight: 600; margin-bottom: 4px;" data-i18n="tokens.visionModel">🎥 视觉分析模型</div>
               <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.75rem;">
                 <div style="text-align: center; padding: 6px; background: #f8f9fa; border-radius: 4px;">
-                  <div style="color: #999;">输入</div>
+                  <div style="color: #999;" data-i18n="tokens.input">输入</div>
                   <div style="color: var(--primary-color); font-weight: 700; font-size: 0.9rem;"><span id="analysisInputTokens">0</span></div>
                 </div>
                 <div style="text-align: center; padding: 6px; background: #f8f9fa; border-radius: 4px;">
-                  <div style="color: #999;">输出</div>
+                  <div style="color: #999;" data-i18n="tokens.output">输出</div>
                   <div style="color: var(--success-color); font-weight: 700; font-size: 0.9rem;"><span id="analysisOutputTokens">0</span></div>
                 </div>
                 <div style="text-align: center; padding: 6px; background: #f8f9fa; border-radius: 4px;">
-                  <div style="color: #999;">总计</div>
+                  <div style="color: #999;" data-i18n="tokens.total">总计</div>
                   <div style="color: #333; font-weight: 700; font-size: 0.9rem;"><span id="analysisTotalTokens">0</span></div>
                 </div>
               </div>
@@ -1079,18 +1085,18 @@
             
             <!-- 洞察模型统计 -->
             <div style="padding: 8px; background: white; border-radius: 6px;">
-              <div style="font-size: 0.8rem; color: #666; font-weight: 600; margin-bottom: 4px;">🔍 文本洞察模型</div>
+              <div style="font-size: 0.8rem; color: #666; font-weight: 600; margin-bottom: 4px;" data-i18n="tokens.textModel">🔍 文本洞察模型</div>
               <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.75rem;">
                 <div style="text-align: center; padding: 6px; background: #f8f9fa; border-radius: 4px;">
-                  <div style="color: #999;">输入</div>
+                  <div style="color: #999;" data-i18n="tokens.input">输入</div>
                   <div style="color: var(--primary-color); font-weight: 700; font-size: 0.9rem;"><span id="insightInputTokens">0</span></div>
                 </div>
                 <div style="text-align: center; padding: 6px; background: #f8f9fa; border-radius: 4px;">
-                  <div style="color: #999;">输出</div>
+                  <div style="color: #999;" data-i18n="tokens.output">输出</div>
                   <div style="color: var(--success-color); font-weight: 700; font-size: 0.9rem;"><span id="insightOutputTokens">0</span></div>
                 </div>
                 <div style="text-align: center; padding: 6px; background: #f8f9fa; border-radius: 4px;">
-                  <div style="color: #999;">总计</div>
+                  <div style="color: #999;" data-i18n="tokens.total">总计</div>
                   <div style="color: #333; font-weight: 700; font-size: 0.9rem;"><span id="insightTotalTokens">0</span></div>
                 </div>
               </div>
@@ -1098,18 +1104,18 @@
             
             <!-- 累计费用 -->
             <div style="padding: 10px; background: white; border-radius: 6px; margin-top: 8px; border: 1px solid var(--border-color);">
-              <div style="font-size: 0.8rem; color: #e67e22; font-weight: 600; margin-bottom: 6px; text-align: center;">💰 费用统计</div>
+              <div style="font-size: 0.8rem; color: #e67e22; font-weight: 600; margin-bottom: 6px; text-align: center;" data-i18n="tokens.costStats">💰 费用统计</div>
               <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.75rem; margin-bottom: 8px;">
                 <div style="text-align: center; padding: 6px; background: white; border-radius: 4px;">
-                  <div style="color: #999; font-size: 0.7rem;">分析</div>
+                  <div style="color: #999; font-size: 0.7rem;" data-i18n="tokens.analysis">分析</div>
                   <div style="color: var(--primary-color); font-weight: 700; font-size: 0.85rem;">¥<span id="analysisCost">0.00</span></div>
                 </div>
                 <div style="text-align: center; padding: 6px; background: white; border-radius: 4px;">
-                  <div style="color: #999; font-size: 0.7rem;">洞察</div>
+                  <div style="color: #999; font-size: 0.7rem;" data-i18n="tokens.insight">洞察</div>
                   <div style="color: var(--success-color); font-weight: 700; font-size: 0.85rem;">¥<span id="insightCost">0.00</span></div>
                 </div>
                 <div style="text-align: center; padding: 6px; background: white; border-radius: 4px;">
-                  <div style="color: #999; font-size: 0.7rem;">累计</div>
+                  <div style="color: #999; font-size: 0.7rem;" data-i18n="tokens.accumulated">累计</div>
                   <div style="color: #e67e22; font-weight: 700; font-size: 0.9rem;">¥<span id="totalCost">0.00</span></div>
                 </div>
               </div>
@@ -1117,15 +1123,15 @@
               <!-- 工作时长和预计成本 -->
               <div style="padding: 8px; background: white; border-radius: 4px; font-size: 0.75rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                  <span style="color: #999;">⏱️ 工作时长</span>
+                  <span style="color: #999;" data-i18n="tokens.workDuration">⏱️ 工作时长</span>
                   <span style="color: #333; font-weight: 700;"><span id="workDuration">00:00:00</span></span>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                  <span style="color: #999;">📊 1小时预计</span>
+                  <span style="color: #999;" data-i18n="tokens.hourlyEstimate">📊 1小时预计</span>
                   <span style="color: var(--primary-color); font-weight: 700;">¥<span id="hourlyEstimate">0.00</span></span>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <span style="color: #999;">📅 24小时预计</span>
+                  <span style="color: #999;" data-i18n="tokens.dailyEstimate">📅 24小时预计</span>
                   <span style="color: #e67e22; font-weight: 700;">¥<span id="dailyEstimate">0.00</span></span>
                 </div>
               </div>
@@ -1133,7 +1139,7 @@
             
             <!-- 清空按钮 -->
             <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #b3e5fc;">
-              <button id="clearTokenStatsBtn" style="width: 100%; padding: 8px 12px; background: var(--danger-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; box-shadow: 0 2px 6px rgba(238, 90, 111, 0.3); transition: all 0.3s;" title="清空统计数据">🗑️ 清空统计数据</button>
+              <button id="clearTokenStatsBtn" style="width: 100%; padding: 8px 12px; background: var(--danger-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; box-shadow: 0 2px 6px rgba(238, 90, 111, 0.3); transition: all 0.3s;" data-i18n-title="tokens.clearStats" data-i18n="tokens.clearStats" title="清空统计数据">🗑️ 清空统计数据</button>
             </div>
           </div>
         </div>
@@ -1141,18 +1147,18 @@
         <!-- 系统配置卡片 -->
         <div class="card mobile-tab-config">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <div class="card-title" style="margin-bottom: 0;">⚙️ 系统配置</div>
+            <div class="card-title" style="margin-bottom: 0;" data-i18n="config.title">⚙️ 系统配置</div>
           </div>
           
           <!-- 配置选项卡导航 -->
           <div class="config-tabs">
-            <button class="config-tab active" onclick="switchConfigTab('model')">
+            <button class="config-tab active" onclick="switchConfigTab('model')" data-i18n="config.tabs.model">
              模型
             </button>
-            <button class="config-tab" onclick="switchConfigTab('prompt')">
+            <button class="config-tab" onclick="switchConfigTab('prompt')" data-i18n="config.tabs.prompt">
              提示词
             </button>
-            <button class="config-tab" onclick="switchConfigTab('params')">
+            <button class="config-tab" onclick="switchConfigTab('params')" data-i18n="config.tabs.params">
              配置
             </button>
           </div>
@@ -1382,7 +1388,7 @@
 
           <!-- 重置按钮 -->
           <div style="margin-top: 20px; padding-top: 16px; border-top: 2px solid #e1e4e8;">
-            <button id="resetConfigBtn" style="width: 100%; padding: 10px 12px; background: white; color: var(--danger-color); border: 2px solid var(--danger-color); border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.3s;" title="恢复初始设置">🔄 恢复初始设置</button>
+            <button id="resetConfigBtn" style="width: 100%; padding: 10px 12px; background: white; color: var(--danger-color); border: 2px solid var(--danger-color); border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.3s;" data-i18n-title="config.reset" data-i18n="config.reset" title="恢复初始设置">🔄 恢复初始设置</button>
           </div>
 
         </div>
@@ -1393,39 +1399,39 @@
         <!-- 汇总分析结果卡片 -->
         <div class="card mobile-tab-insight" id="summaryCard" style="display: none;">
           <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
-            <span>📊 历史汇总分析</span>
-            <button onclick="downloadHistory()" style="padding: 6px 12px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.3s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'" title="下载所有分析历史">📥 下载</button>
+            <span data-i18n="summary.title">📊 历史汇总分析</span>
+            <button onclick="downloadHistory()" style="padding: 6px 12px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.3s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'" data-i18n-title="summary.download" data-i18n="summary.download" title="下载所有分析历史">📥 下载</button>
           </div>
           <div style="padding: 12px; background: #f8f9fa; border-radius: 8px; margin-bottom: 12px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <span style="font-size: 0.85rem; color: #666;">采集条目: <strong id="summaryHistoryCount">0</strong></span>
-              <span style="font-size: 0.85rem; color: #666;">生成时间: <strong id="summaryTimestamp">-</strong></span>
+              <span style="font-size: 0.85rem; color: #666;"><span data-i18n="summary.historyCount">采集条目</span>: <strong id="summaryHistoryCount">0</strong></span>
+              <span style="font-size: 0.85rem; color: #666;"><span data-i18n="summary.generateTime">生成时间</span>: <strong id="summaryTimestamp">-</strong></span>
             </div>
           </div>
           <div id="summaryResult" style="padding: 16px; background: white; border: 2px solid #e1e4e8; border-radius: 8px; min-height: 200px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; font-size: 0.9rem; line-height: 1.6;"></div>
         </div>
         
         <div class="card mobile-tab-insight">
-          <div class="card-title">分析历史</div>
+          <div class="card-title" data-i18n="history.title">分析历史</div>
           <div class="history-container" id="history"></div>
         </div>
         
         <div class="card mobile-tab-insight">
-          <div class="card-title">💡 多层级洞察分析</div>
+          <div class="card-title" data-i18n="insight.title">💡 多层级洞察分析</div>
           
           <!-- 选项卡导航 -->
           <div style="display: flex; border-bottom: 2px solid #e1e4e8; margin-bottom: 16px;">
             <button class="insight-tab active" onclick="switchInsightTab('minute')" style="flex: 1; padding: 12px; border: none; background: none; cursor: pointer; font-weight: 600; color: var(--primary-color); border-bottom: 3px solid var(--primary-color); transition: all 0.3s;">
-              60秒 <span id="minuteCount" style="font-size: 0.85rem; color: #999; margin-left: 8px;">(0)</span>
+              <span data-i18n="insight.tabs.minute">60秒</span> <span id="minuteCount" style="font-size: 0.85rem; color: #999; margin-left: 8px;">(0)</span>
             </button>
             <button class="insight-tab" onclick="switchInsightTab('fifteen')" style="flex: 1; padding: 12px; border: none; background: none; cursor: pointer; font-weight: 600; color: #999; border-bottom: 3px solid transparent; transition: all 0.3s;">
-              一刻 <span id="fifteenCount" style="font-size: 0.85rem; color: #999; margin-left: 8px;">(0)</span>
+              <span data-i18n="insight.tabs.fifteen">一刻</span> <span id="fifteenCount" style="font-size: 0.85rem; color: #999; margin-left: 8px;">(0)</span>
             </button>
             <button class="insight-tab" onclick="switchInsightTab('hour')" style="flex: 1; padding: 12px; border: none; background: none; cursor: pointer; font-weight: 600; color: #999; border-bottom: 3px solid transparent; transition: all 0.3s;">
-              1小时 <span id="hourCount" style="font-size: 0.85rem; color: #999; margin-left: 8px;">(0)</span>
+              <span data-i18n="insight.tabs.hour">1小时</span> <span id="hourCount" style="font-size: 0.85rem; color: #999; margin-left: 8px;">(0)</span>
             </button>
             <button class="insight-tab" onclick="switchInsightTab('day')" style="flex: 1; padding: 12px; border: none; background: none; cursor: pointer; font-weight: 600; color: #999; border-bottom: 3px solid transparent; transition: all 0.3s;">
-              全天 <span id="dayCount" style="font-size: 0.85rem; color: #999; margin-left: 8px;">(0)</span>
+              <span data-i18n="insight.tabs.day">全天</span> <span id="dayCount" style="font-size: 0.85rem; color: #999; margin-left: 8px;">(0)</span>
             </button>
           </div>
           
@@ -1449,21 +1455,21 @@
           <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 2px solid #e1e4e8; background: white; border-bottom: 1px solid var(--border-color);">
             <h3 style="margin: 0; color: #333; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
               <span>✅</span>
-              <span>待办任务</span>
+              <span data-i18n="task.title">待办任务</span>
               <span id="taskCount" style="font-size: 0.85rem; color: #999; margin-left: 8px;">(0)</span>
             </h3>
           </div>
           <div id="taskList" style="padding: 12px; max-height: 400px; overflow-y: auto;">
             <div style="text-align: center; color: #999; padding: 40px 20px;">
               <div style="font-size: 3rem; margin-bottom: 10px;">📋</div>
-              <div>暂无任务</div>
-              <div style="font-size: 0.85rem; margin-top: 8px;">任务将从汇总和洞察中自动提取</div>
+              <div data-i18n="task.noTasks">暂无任务</div>
+              <div style="font-size: 0.85rem; margin-top: 8px;" data-i18n="task.autoExtractTip">任务将从汇总和洞察中自动提取</div>
             </div>
           </div>
           
           <!-- 清空按钮 -->
           <div style="padding: 12px; border-top: 1px solid #e1e4e8; background: #f8f9fa;">
-            <button id="clearTasksBtn" style="width: 100%; padding: 10px 12px; background: white; color: var(--danger-color); border: 2px solid var(--danger-color); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.3s;" title="清空所有任务">🗑️ 清空所有任务</button>
+            <button id="clearTasksBtn" style="width: 100%; padding: 10px 12px; background: white; color: var(--danger-color); border: 2px solid var(--danger-color); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.3s;" data-i18n-title="task.clearAll" data-i18n="task.clearAll" title="清空所有任务">🗑️ 清空所有任务</button>
           </div>
         </div>
       </div>
@@ -1480,6 +1486,13 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+  <script>
+    // i18n 初始化
+    (async function() {
+      await i18n.init();
+      i18n.createLanguageSwitcher('languageSwitcherContainer');
+    })();
+  </script>
   <script>
     // 快速开始提示逻辑
     (function() {
@@ -1524,19 +1537,19 @@
   <div class="mobile-tab-bar">
     <div class="mobile-tab-item active" onclick="switchMobileTab('collection')">
       <div class="mobile-tab-icon">📹</div>
-      <div>采集</div>
+      <div data-i18n="mobile.tabs.collection">采集</div>
     </div>
     <div class="mobile-tab-item" onclick="switchMobileTab('insight')">
       <div class="mobile-tab-icon">📊</div>
-      <div>洞察</div>
+      <div data-i18n="mobile.tabs.insight">洞察</div>
     </div>
     <div class="mobile-tab-item" onclick="switchMobileTab('task')">
       <div class="mobile-tab-icon">✅</div>
-      <div>任务</div>
+      <div data-i18n="mobile.tabs.task">任务</div>
     </div>
     <div class="mobile-tab-item" onclick="switchMobileTab('config')">
       <div class="mobile-tab-icon">⚙️</div>
-      <div>配置</div>
+      <div data-i18n="mobile.tabs.config">配置</div>
     </div>
   </div>
 

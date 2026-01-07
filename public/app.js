@@ -268,7 +268,7 @@ function updateWorkDurationDisplay() {
 
 // 清空统计
 function clearTokenStats() {
-  if (confirm('确定要清空所有 Token 统计数据吗？')) {
+  if (confirm(i18n.t('confirm.clearTokenStats'))) {
     tokenStats = {
       analysis: { input: 0, output: 0, total: 0 },
       insight: { input: 0, output: 0, total: 0 }
@@ -283,7 +283,7 @@ function clearTokenStats() {
     updateTokenStatsDisplay();
     updateWorkDurationDisplay();
     saveTokenStats();
-    showSaveNotification('✅ Token 统计已清空');
+    showSaveNotification(i18n.t('tokens.statsCleared'));
   }
 }
 
@@ -347,10 +347,10 @@ async function startVideoStream() {
     // toggleStreamBtn.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
     deviceSelect.disabled = true;
     // startBtn.disabled = false;
-    statusSpan.textContent = '本地视频流已启动';
+    statusSpan.textContent = i18n.t('video.streamStarted');
   } catch (err) {
     console.error(err);
-    statusSpan.textContent = '启动本地视频流失败 - ' + (err.message || err);
+    statusSpan.textContent = i18n.t('errors.streamFailed') + ' - ' + (err.message || err);
   }
 }
 
@@ -382,7 +382,7 @@ function stopVideoStream() {
   // toggleStreamBtn.style.background = 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)';
   deviceSelect.disabled = false;
   // startBtn.disabled = true;
-  statusSpan.textContent = '本地视频流已停止';
+  statusSpan.textContent = i18n.t('video.streamStopped');
 }
 
 // 更新设备列表
@@ -405,7 +405,7 @@ function updateDeviceList(devices) {
 async function requestDeviceList() {
   try {
     if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
-      deviceSelect.innerHTML = '<option value="default">设备枚举不可用</option>';
+      deviceSelect.innerHTML = `<option value="default">${i18n.t('errors.deviceEnumUnavailable')}</option>`;
       return;
     }
 
@@ -425,15 +425,15 @@ async function requestDeviceList() {
     }
 
     if (videoDevices.length === 0) {
-      deviceSelect.innerHTML = '<option value="default">无视频设备</option>';
+      deviceSelect.innerHTML = `<option value="default">${i18n.t('errors.noDevices')}</option>`;
       return;
     }
 
-    const list = videoDevices.map((d, i) => ({ id: d.deviceId, name: d.label || `摄像头 ${i + 1}` }));
+    const list = videoDevices.map((d, i) => ({ id: d.deviceId, name: d.label || `${i18n.t('video.device')} ${i + 1}` }));
     updateDeviceList(list);
   } catch (err) {
     console.error('无法枚举设备', err);
-    deviceSelect.innerHTML = '<option value="default">无法获取设备</option>';
+    deviceSelect.innerHTML = `<option value="default">${i18n.t('errors.cantGetDevices')}</option>`;
   }
 }
 
@@ -453,7 +453,7 @@ async function startAnalysis() {
     const analyzeInterval = parseInt(intervalInput.value) || 12; // 分析间隔（秒）
     const totalFrames = parseInt(fpsInput.value) || 4; // 总帧数
     
-    toggleAnalysisBtn.textContent = '⏹️ 停止分析并汇总';
+    toggleAnalysisBtn.textContent = i18n.t('video.stopAnalysis');
     toggleAnalysisBtn.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
     intervalInput.disabled = true;
     fpsInput.disabled = true;
@@ -471,7 +471,7 @@ async function startAnalysis() {
     // 计算采样间隔：在分析间隔内均匀采集totalFrames帧
     const captureIntervalMs = (analyzeInterval * 1000) / totalFrames;
     const actualFps = (1000 / captureIntervalMs).toFixed(2);
-    statusSpan.textContent = `正在采集，每 ${analyzeInterval}秒 采集 ${totalFrames}帧 (${actualFps} fps)`;
+    statusSpan.textContent = i18n.t('video.collecting', { interval: analyzeInterval, frames: totalFrames, fps: actualFps });
     
     // 1. 启动持续采样：按计算的间隔持续捕获帧到缓存
     captureIntervalId = setInterval(async () => {
@@ -490,7 +490,7 @@ async function startAnalysis() {
           blob: blob,
           timestamp: new Date()
         });
-        statusSpan.textContent = `已缓存 ${frameBuffer.length}/${totalFrames} 帧`;
+        statusSpan.textContent = i18n.t('video.cached', { current: frameBuffer.length, total: totalFrames });
         
         // 更新缩略图显示
         updateFrameBufferPreview();
@@ -542,7 +542,7 @@ async function stopAnalysis() {
   
   // 确保按钮元素存在
   if (toggleAnalysisBtn) {
-    toggleAnalysisBtn.textContent = '▶️ 开始分析与采集';
+    toggleAnalysisBtn.textContent = i18n.t('video.startAnalysis');
     toggleAnalysisBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
     console.log('Button updated to:', toggleAnalysisBtn.textContent);
   } else {
@@ -554,7 +554,7 @@ async function stopAnalysis() {
   deviceSelect.disabled = false;
   const statusContainer = document.getElementById('statusContainer');
   statusContainer.classList.remove('active', 'error');
-  statusSpan.textContent = '已停止';
+  statusSpan.textContent = i18n.t('video.streamStopped');
   
   // 隐藏缓存帧预览
   updateFrameBufferPreview();
@@ -1837,8 +1837,8 @@ function updateTaskDisplay() {
     taskListEl.innerHTML = `
       <div style="text-align: center; color: #999; padding: 40px 20px;">
         <div style="font-size: 3rem; margin-bottom: 10px;">📋</div>
-        <div>暂无任务</div>
-        <div style="font-size: 0.85rem; margin-top: 8px;">任务将从汇总和洞察中自动提取</div>
+        <div>${i18n.t('task.noTasks')}</div>
+        <div style="font-size: 0.85rem; margin-top: 8px;">${i18n.t('task.autoExtractTip')}</div>
       </div>
     `;
     return;
@@ -2252,5 +2252,44 @@ document.addEventListener('DOMContentLoaded', () => {
   // 连接控制WebSocket
   connectControlWebSocket();
 });
+
+// ==================== 国际化支持 ====================
+
+// 监听语言更改事件
+window.addEventListener('localeChanged', (event) => {
+  console.log('[i18n] 语言已更改为:', event.detail.locale);
+  
+  // 更新动态生成的内容
+  updateDynamicTranslations();
+});
+
+// 更新动态翻译（在语言切换后调用）
+function updateDynamicTranslations() {
+  // 更新按钮文本
+  if (toggleAnalysisBtn) {
+    if (isAnalyzing) {
+      toggleAnalysisBtn.textContent = i18n.t('video.stopAnalysis');
+    } else {
+      toggleAnalysisBtn.textContent = i18n.t('video.startAnalysis');
+    }
+  }
+  
+  // 更新状态文本
+  if (statusSpan) {
+    if (!isStreamActive && !isAnalyzing) {
+      statusSpan.textContent = i18n.t('video.notStarted');
+    } else if (isStreamActive && !isAnalyzing) {
+      statusSpan.textContent = i18n.t('video.streamStarted');
+    }
+  }
+  
+  // 更新任务列表显示
+  updateTaskDisplay();
+  
+  // 刷新设备列表（重新请求以更新标签）
+  if (!isAnalyzing) {
+    requestDeviceList();
+  }
+}
 
 

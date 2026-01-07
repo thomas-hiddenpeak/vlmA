@@ -1,0 +1,152 @@
+{
+  "app": {
+    "title": "RMinte 多模态分析引擎",
+    "subtitle": "基于 VLM 的多模态分析PE测试平台"
+  },
+  "quickStart": {
+    "title": "快速开始",
+    "noApiKey": "还没有 API Key？",
+    "getApiKey": "免费获取阿里云百炼 API Key",
+    "fillInConfig": "，然后在「模型配置」中填入即可开始使用！",
+    "localDeploy": "想要本地部署？推荐使用",
+    "rm01": "RM-01 便携 AI 超算中心",
+    "closeTooltip": "关闭提示"
+  },
+  "video": {
+    "preview": "视频预览",
+    "device": "UVC设备:",
+    "loading": "加载中...",
+    "refreshDevices": "刷新设备列表",
+    "resolution": "分辨率:",
+    "fullHD": "全高清",
+    "hd": "高清",
+    "sd": "标清",
+    "ultraHD": "极清",
+    "startAnalysis": "▶️ 开始分析与采集",
+    "stopAnalysis": "⏹️ 停止分析并汇总",
+    "notStarted": "未启动视频流",
+    "streamStarted": "本地视频流已启动",
+    "streamStopped": "本地视频流已停止",
+    "collecting": "正在采集，每 {interval}秒 采集 {frames}帧 ({fps} fps)",
+    "cached": "已缓存 {current}/{total} 帧",
+    "framePreview": "📷 缓存帧预览",
+    "frames": "帧"
+  },
+  "tokens": {
+    "title": "📊 Tokens 使用统计",
+    "visionModel": "🎥 视觉分析模型",
+    "textModel": "🔍 文本洞察模型",
+    "input": "输入",
+    "output": "输出",
+    "total": "总计",
+    "costStats": "💰 费用统计",
+    "analysis": "分析",
+    "insight": "洞察",
+    "accumulated": "累计",
+    "workDuration": "⏱️ 工作时长",
+    "hourlyEstimate": "📊 1小时预计",
+    "dailyEstimate": "📅 24小时预计",
+    "clearStats": "🗑️ 清空统计数据",
+    "statsCleared": "✅ Token 统计已清空"
+  },
+  "config": {
+    "title": "⚙️ 系统配置",
+    "tabs": {
+      "model": "模型",
+      "prompt": "提示词",
+      "params": "配置"
+    },
+    "model": {
+      "visionTitle": "📹 视觉分析模型",
+      "textTitle": "🔍 文本洞察模型",
+      "apiUrl": "API 地址",
+      "modelName": "模型名称",
+      "maxOutput": "最大输出",
+      "maxOutputPlaceholder": "留空表示不限制",
+      "apiKey": "API Key",
+      "apiKeyPlaceholder": "留空表示无需认证(本地模型)",
+      "getKey": "🔑 获取 Key",
+      "price": "单价(元/千)",
+      "visionTip": "💡 使用阿里云百炼：点击「获取 Key」按钮免费申请 API Key，支持 qwen-vl-plus/qwen-vl-max 等视觉模型",
+      "textTip": "💡 使用阿里云百炼：点击「获取 Key」按钮免费申请 API Key，支持 qwen-max/qwen-plus 等文本模型",
+      "saveConfig": "💾 保存模型配置"
+    },
+    "prompt": {
+      "analysisTitle": "📹 分析提示词",
+      "insightTitle": "🔍 洞察提示词",
+      "summaryTitle": "📊 汇总提示词",
+      "taskTitle": "✅ 任务梳理提示词",
+      "promptLabel": "提示词",
+      "summaryLabel": "汇总提示词",
+      "analysisTip": "ℹ️ 此提示词用于指导模型如何分析视频帧内容。",
+      "insightTip": "ℹ️ 此提示词用于指导模型如何进行多层级洞察分析。",
+      "summaryTip": "ℹ️ 当点击\"停止并汇总\"按钮时，系统会使用此提示词对所有采集的历史分析进行综合分析。",
+      "taskTip": "ℹ️ 此提示词用于从汇总分析和洞察结果中提取待办任务。系统会在生成汇总、1小时洞察和每日洞察后自动调用。",
+      "autoExtract": "自动提取任务",
+      "autoExtractTip": "启用后将在汇总、1小时洞察和每日洞察完成时自动提取任务",
+      "saveConfig": "💾 保存提示词配置"
+    },
+    "params": {
+      "analysisTitle": "📹 分析参数",
+      "insightTitle": "🔍 洞察区间",
+      "interval": "分析间隔",
+      "frameCount": "采集帧数",
+      "minute": "60秒区间",
+      "fifteen": "15分钟区间",
+      "hour": "1小时区间",
+      "day": "每日区间",
+      "saveConfig": "💾 保存参数配置"
+    },
+    "reset": "🔄 恢复初始设置",
+    "saved": "✅ 配置已保存"
+  },
+  "history": {
+    "title": "分析历史",
+    "record": "记录 #{number}",
+    "noHistory": "暂无分析历史"
+  },
+  "insight": {
+    "title": "💡 多层级洞察分析",
+    "tabs": {
+      "minute": "60秒",
+      "fifteen": "一刻",
+      "hour": "1小时",
+      "day": "全天"
+    }
+  },
+  "summary": {
+    "title": "📊 历史汇总分析",
+    "download": "📥 下载",
+    "historyCount": "采集条目",
+    "generateTime": "生成时间"
+  },
+  "task": {
+    "title": "待办任务",
+    "noTasks": "暂无任务",
+    "autoExtractTip": "任务将从汇总和洞察中自动提取",
+    "clearAll": "🗑️ 清空所有任务",
+    "confirmClear": "确定要清空所有任务吗？"
+  },
+  "mobile": {
+    "tabs": {
+      "collection": "采集",
+      "insight": "洞察",
+      "task": "任务",
+      "config": "配置"
+    }
+  },
+  "errors": {
+    "streamFailed": "启动本地视频流失败",
+    "noDevices": "无视频设备",
+    "cantGetDevices": "无法获取设备",
+    "deviceEnumUnavailable": "设备枚举不可用"
+  },
+  "confirm": {
+    "clearTokenStats": "确定要清空所有 Token 统计数据吗？",
+    "resetConfig": "确定要恢复初始设置吗？"
+  },
+  "language": {
+    "zh-CN": "简体中文",
+    "en-US": "English"
+  }
+}

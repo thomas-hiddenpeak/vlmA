@@ -1,0 +1,152 @@
+{
+  "app": {
+    "title": "RMinte Multimodal Analysis Engine",
+    "subtitle": "VLM-based Multimodal Analysis Testing Platform"
+  },
+  "quickStart": {
+    "title": "Quick Start",
+    "noApiKey": "Don't have an API Key?",
+    "getApiKey": "Get Alibaba Cloud Bailian API Key for free",
+    "fillInConfig": ", then fill it in \"Model Configuration\" to start!",
+    "localDeploy": "Want to deploy locally? We recommend using",
+    "rm01": "RM-01 Portable AI Supercomputing Center",
+    "closeTooltip": "Close this tip"
+  },
+  "video": {
+    "preview": "Video Preview",
+    "device": "UVC Device:",
+    "loading": "Loading...",
+    "refreshDevices": "Refresh device list",
+    "resolution": "Resolution:",
+    "fullHD": "Full HD",
+    "hd": "HD",
+    "sd": "SD",
+    "ultraHD": "Ultra HD",
+    "startAnalysis": "▶️ Start Analysis",
+    "stopAnalysis": "⏹️ Stop & Summarize",
+    "notStarted": "Video stream not started",
+    "streamStarted": "Local video stream started",
+    "streamStopped": "Local video stream stopped",
+    "collecting": "Collecting: {frames} frames every {interval}s ({fps} fps)",
+    "cached": "Cached {current}/{total} frames",
+    "framePreview": "📷 Frame Buffer Preview",
+    "frames": "frames"
+  },
+  "tokens": {
+    "title": "📊 Token Usage Statistics",
+    "visionModel": "🎥 Vision Analysis Model",
+    "textModel": "🔍 Text Insight Model",
+    "input": "Input",
+    "output": "Output",
+    "total": "Total",
+    "costStats": "💰 Cost Statistics",
+    "analysis": "Analysis",
+    "insight": "Insight",
+    "accumulated": "Total",
+    "workDuration": "⏱️ Work Duration",
+    "hourlyEstimate": "📊 Hourly Estimate",
+    "dailyEstimate": "📅 Daily Estimate",
+    "clearStats": "🗑️ Clear Statistics",
+    "statsCleared": "✅ Token statistics cleared"
+  },
+  "config": {
+    "title": "⚙️ System Configuration",
+    "tabs": {
+      "model": "Model",
+      "prompt": "Prompts",
+      "params": "Params"
+    },
+    "model": {
+      "visionTitle": "📹 Vision Analysis Model",
+      "textTitle": "🔍 Text Insight Model",
+      "apiUrl": "API URL",
+      "modelName": "Model Name",
+      "maxOutput": "Max Output",
+      "maxOutputPlaceholder": "Leave empty for no limit",
+      "apiKey": "API Key",
+      "apiKeyPlaceholder": "Leave empty if no auth needed (local model)",
+      "getKey": "🔑 Get Key",
+      "price": "Price (¥/1K)",
+      "visionTip": "💡 Using Alibaba Cloud Bailian: Click \"Get Key\" to apply for a free API Key, supports qwen-vl-plus/qwen-vl-max vision models",
+      "textTip": "💡 Using Alibaba Cloud Bailian: Click \"Get Key\" to apply for a free API Key, supports qwen-max/qwen-plus text models",
+      "saveConfig": "💾 Save Model Config"
+    },
+    "prompt": {
+      "analysisTitle": "📹 Analysis Prompt",
+      "insightTitle": "🔍 Insight Prompt",
+      "summaryTitle": "📊 Summary Prompt",
+      "taskTitle": "✅ Task Extraction Prompt",
+      "promptLabel": "Prompt",
+      "summaryLabel": "Summary Prompt",
+      "analysisTip": "ℹ️ This prompt guides how the model analyzes video frame content.",
+      "insightTip": "ℹ️ This prompt guides how the model performs multi-level insight analysis.",
+      "summaryTip": "ℹ️ When clicking \"Stop & Summarize\", this prompt is used for comprehensive analysis of all collected history.",
+      "taskTip": "ℹ️ This prompt extracts actionable tasks from summaries and insights. Called automatically after generating summaries, hourly insights, and daily insights.",
+      "autoExtract": "Auto-extract tasks",
+      "autoExtractTip": "When enabled, tasks will be automatically extracted after summaries, hourly and daily insights",
+      "saveConfig": "💾 Save Prompt Config"
+    },
+    "params": {
+      "analysisTitle": "📹 Analysis Parameters",
+      "insightTitle": "🔍 Insight Intervals",
+      "interval": "Analysis Interval",
+      "frameCount": "Frame Count",
+      "minute": "60s Interval",
+      "fifteen": "15min Interval",
+      "hour": "1 Hour Interval",
+      "day": "Daily Interval",
+      "saveConfig": "💾 Save Params Config"
+    },
+    "reset": "🔄 Reset to Default",
+    "saved": "✅ Configuration saved"
+  },
+  "history": {
+    "title": "Analysis History",
+    "record": "Record #{number}",
+    "noHistory": "No analysis history yet"
+  },
+  "insight": {
+    "title": "💡 Multi-level Insight Analysis",
+    "tabs": {
+      "minute": "60s",
+      "fifteen": "15min",
+      "hour": "1 Hour",
+      "day": "Daily"
+    }
+  },
+  "summary": {
+    "title": "📊 Historical Summary Analysis",
+    "download": "📥 Download",
+    "historyCount": "Items collected",
+    "generateTime": "Generated at"
+  },
+  "task": {
+    "title": "To-Do Tasks",
+    "noTasks": "No tasks yet",
+    "autoExtractTip": "Tasks will be auto-extracted from summaries and insights",
+    "clearAll": "🗑️ Clear All Tasks",
+    "confirmClear": "Are you sure you want to clear all tasks?"
+  },
+  "mobile": {
+    "tabs": {
+      "collection": "Capture",
+      "insight": "Insight",
+      "task": "Tasks",
+      "config": "Config"
+    }
+  },
+  "errors": {
+    "streamFailed": "Failed to start local video stream",
+    "noDevices": "No video devices",
+    "cantGetDevices": "Cannot get devices",
+    "deviceEnumUnavailable": "Device enumeration unavailable"
+  },
+  "confirm": {
+    "clearTokenStats": "Are you sure you want to clear all token statistics?",
+    "resetConfig": "Are you sure you want to reset to default settings?"
+  },
+  "language": {
+    "zh-CN": "简体中文",
+    "en-US": "English"
+  }
+}
