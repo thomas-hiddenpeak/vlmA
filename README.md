@@ -876,15 +876,20 @@ macOS 用户首次运行应用时可能遇到"应用已损坏"或"无法打开"�
 
 📖 **[macOS 安装使用指南](MACOS_INSTALL.md)**
 
-**快速解决方法：**
+**快速解决方法（终端命令）：**
 
+**v1.9.1 及以后版本：**
 ```bash
-# 在终端中运行以下命令移除隔离属性
+sudo xattr -rd com.apple.quarantine "/Applications/RMinte VLMA.app"
+```
+
+**v1.9.0 及以前版本：**
+```bash
 sudo xattr -rd com.apple.quarantine "/Applications/RMinte 多模态分析引擎.app"
 ```
 
 同时需要：
-- ✅ 授予摄像头访问权限
+- ✅ 授予摄像头访问权限（系统设置 > 隐私与安全性 > 摄像头）
 - ✅ 确保已安装 Node.js（后端服务器需要）
 - ✅ 根据芯片类型选择正确版本（Apple Silicon 选 arm64，Intel 选标准版）
 
